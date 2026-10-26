@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TravelMate — Your Entire Journey in One Place</title>
+<meta name="description" content="TravelMate: plan routes, stays, transport, food, attractions, budget and your return home in one place. Demo build.">
+<style>
+/* ============ DESIGN SYSTEM ============ */
+:root{
+  --navy:#0b1f3a; --navy2:#12305a; --ocean:#0e7fc2; --sky:#e8f4fc; --orange:#b84a00; --orange2:#963900;
+  --ink:#16202e; --muted:#5b6778; --line:#dce5ee; --bg:#f4f7fa; --card:#fff; --ok:#12805c; --warn:#b26a00; --bad:#c62828;
+  --r:18px; --shadow:0 5px 20px rgba(11,31,58,.07); --shadow2:0 12px 32px rgba(11,31,58,.14);
+  --font:'Segoe UI',system-ui,-apple-system,Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;font-size:16px}
+img{max-width:100%}
+a{color:var(--ocean)}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:-999px;top:0;background:var(--orange);color:#fff;padding:10px 16px;z-index:999}
+.skip:focus{left:8px;top:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+h1,h2,h3{line-height:1.2;color:var(--navy)}
+h2{font-size:clamp(1.5rem,3vw,2.1rem);margin-bottom:6px}
+h3{font-size:1.1rem}
+.sub{color:var(--muted);margin-bottom:22px}
+section.block{padding:46px 0}
+.connection-status{padding:7px 16px;text-align:center;font-size:.82rem;background:#e8f7f0;color:#0b5c41;border-bottom:1px solid #b7e3cf}
+.connection-status.offline,.connection-status.slow,.connection-status.storage-error{background:#fff5e0;color:#704300;border-color:#f0d28f}
+.account-pill{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:.82rem}
+.signed-out .main,.signed-out .tools,.signed-out footer{display:none}
+.login-shell{min-height:calc(100dvh - 100px);display:grid;place-items:center;padding:36px 16px;background:radial-gradient(ellipse at 78% 18%,rgba(14,127,194,.12),transparent 42%),var(--bg)}
+.login-card{width:min(100%,460px);padding:clamp(22px,5vw,38px);border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:var(--shadow2)}
+.login-mark{width:48px;height:48px;display:grid;place-items:center;margin-bottom:22px;border-radius:14px;background:var(--navy);color:white;font-size:1.4rem}
+.login-card h1{font-size:clamp(1.8rem,5vw,2.35rem);margin-bottom:8px}
+.login-card .field{margin-top:16px}
+.login-card .btn{width:100%;margin-top:22px}
+.local-note{padding:12px 14px;border-radius:10px;background:var(--sky);color:#0d4d78;font-size:.88rem}
+.otp-code{display:block;margin:14px 0;padding:16px;border:1px dashed #9bbbd4;border-radius:12px;background:#f2f8fc;color:var(--navy);font-size:1.8rem;font-weight:800;letter-spacing:.35em;text-align:center}
+.otp-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.otp-actions>*{flex:1}
+/* header */
+header.top{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:14px;height:66px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.3rem;color:var(--navy);text-decoration:none;white-space:nowrap}
+.logo i{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--ocean),var(--navy));color:#fff;font-style:normal;font-size:1.1rem}
+.logo span em{color:var(--orange);font-style:normal}
+nav.main{display:flex;gap:2px;margin-left:auto;align-items:center}
+nav.main a{padding:8px 11px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:.92rem;font-weight:600;white-space:nowrap}
+nav.main a:hover{background:var(--sky)}
+nav.main a.on{background:var(--navy);color:#fff}
+.tools{display:flex;gap:8px;align-items:center}
+.tools select{padding:7px 8px;border-radius:10px;border:1px solid var(--line);background:#fff;font:inherit;font-size:.85rem}
+.ibtn{position:relative;border:1px solid var(--line);background:#fff;border-radius:11px;width:40px;height:40px;cursor:pointer;font-size:1.05rem}
+.ibtn:hover{background:var(--sky)}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--orange);color:#fff;border-radius:99px;font-size:.7rem;font-weight:700;padding:1px 6px;min-width:18px}
+.burger{display:none}
+@media(max-width:1060px){
+  .burger{display:inline-block}
+  nav.main{position:absolute;left:0;right:0;top:66px;background:#fff;flex-direction:column;align-items:stretch;padding:10px 16px 16px;border-bottom:1px solid var(--line);box-shadow:var(--shadow);display:none;margin:0}
+  nav.main.open{display:flex}
+  .tools{margin-left:auto}
+}
+/* buttons / forms */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;cursor:pointer;font:inherit;font-weight:700;padding:11px 20px;border-radius:12px;background:var(--orange);color:#fff;text-decoration:none;transition:.18s;font-size:.95rem}
+.btn:hover{background:var(--orange2);transform:translateY(-1px)}
+.btn.sec{background:var(--navy);} .btn.sec:hover{background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)} .btn.ghost:hover{background:var(--sky)}
+.btn.danger{background:#fff;color:var(--bad);border:1.5px solid #f0c4c4} .btn.danger:hover{background:#fdeeee}
+.btn.sm{padding:7px 12px;font-size:.84rem;border-radius:10px}
+.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+label{display:block;font-weight:600;font-size:.86rem;margin-bottom:5px;color:var(--navy)}
+input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--ocean);outline:none;box-shadow:0 0 0 3px rgba(14,127,194,.18)}
+.err{color:var(--bad);font-size:.82rem;margin-top:4px;min-height:1em}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.field{display:flex;flex-direction:column}
+.panel{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:22px;border:1px solid var(--line)}
+.alert{padding:12px 14px;border-radius:12px;font-size:.9rem;margin:10px 0;border:1px solid}
+.alert.info{background:#eaf5fd;border-color:#b9dcf3;color:#0d4d78}
+.alert.ok{background:#e8f7f0;border-color:#b7e3cf;color:#0b5c41}
+.alert.warn{background:#fff5e0;border-color:#f3d79a;color:#7a4a00}
+.alert.bad{background:#fdeeee;border-color:#f3c0c0;color:#8f1d1d}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--sky);color:var(--ocean)}
+.tag.ok{background:#e1f5ec;color:var(--ok)} .tag.bad{background:#fde3e3;color:var(--bad)} .tag.warn{background:#fff0d1;color:var(--warn)}
+.empty{text-align:center;padding:44px 16px;color:var(--muted);background:#fff;border:2px dashed var(--line);border-radius:var(--r)}
+.empty .big{font-size:2.6rem}
+.spinner{width:34px;height:34px;border:4px solid var(--line);border-top-color:var(--orange);border-radius:50%;animation:sp .8s linear infinite;margin:20px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* hero */
+.hero{position:relative;color:#fff;overflow:hidden;background:linear-gradient(180deg,#0a2a52 0%,#0e5d9c 55%,#f5a35c 100%);padding:70px 0 120px}
+.hero svg.scene{position:absolute;inset:auto 0 0 0;width:100%;height:46%;min-height:200px;pointer-events:none}
+.hero .wrap{position:relative;z-index:2}
+.hero h1{color:#fff;font-size:clamp(2.2rem,5.4vw,3.9rem);max-width:760px;letter-spacing:-.5px}
+.hero h1 em{color:var(--orange);font-style:normal}
+.hero p.lead{max-width:620px;font-size:1.12rem;opacity:.92;margin:16px 0 28px}
+.search{background:#fff;color:var(--ink);border-radius:20px;padding:20px;box-shadow:var(--shadow2);display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end;max-width:1000px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 14px;border-radius:99px;font-size:.85rem;cursor:pointer;font-weight:600}
+.chip:hover{background:rgba(255,255,255,.3)}
+.floaty{position:absolute;font-size:2rem;opacity:.85;animation:fl 6s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-14px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* cards */
+.card{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);display:flex;flex-direction:column;transition:.22s}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow2)}
+.media{height:150px;display:grid;place-items:center;font-size:3.6rem;position:relative}
+.media .tag{position:absolute;top:10px;left:10px}
+.fav{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:0;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.05rem}
+.card .body{padding:16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.meta{color:var(--muted);font-size:.86rem}
+.price{font-weight:800;color:var(--navy);font-size:1.1rem}
+.price small{font-weight:500;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.sp{justify-content:space-between}
+.card .actions{margin-top:auto;padding-top:10px;display:flex;gap:8px}
+.stars{color:#f5a300;font-weight:700}
+/* filter bar */
+.filters{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end;margin-bottom:20px;box-shadow:var(--shadow)}
+/* feature blocks */
+.feat{text-align:center;padding:24px 16px}
+.feat .ic{width:62px;height:62px;border-radius:18px;background:var(--sky);display:grid;place-items:center;font-size:1.8rem;margin:0 auto 12px}
+.step{counter-increment:s;position:relative;padding-top:8px}
+.step::before{content:counter(s);position:absolute;top:-8px;left:0;width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:800}
+.step h3{margin-left:46px;margin-top:2px;margin-bottom:4px}.step p{margin-left:46px;color:var(--muted)}
+.steps{counter-reset:s}
+details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:700;color:var(--navy)}
+details p{margin-top:8px;color:var(--muted)}
+.quote{font-style:italic;color:var(--ink)}
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem;background:#fff;border-radius:12px;overflow:hidden}
+.tbl th,.tbl td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+.tbl th{background:var(--sky);color:var(--navy);font-size:.8rem;text-transform:uppercase;letter-spacing:.4px}
+.scroll{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+/* tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tabs button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer;font-size:.9rem}
+.tabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* stat */
+.stat{background:#fff;border-radius:var(--r);padding:18px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.stat b{display:block;font-size:1.8rem;color:var(--navy)}
+.stat span{color:var(--muted);font-size:.86rem}
+.bars .bl{display:grid;grid-template-columns:130px 1fr 90px;gap:10px;align-items:center;margin:10px 0;font-size:.88rem}
+.bars .track{background:#edf2f7;border-radius:99px;height:14px;position:relative;overflow:hidden}
+.bars .plan{position:absolute;inset:0 auto 0 0;background:#bcd9ee;border-radius:99px}
+.bars .act{position:absolute;inset:0 auto 0 0;background:var(--orange);border-radius:99px;opacity:.92}
+.bars .act.over{background:var(--bad)}
+/* timeline */
+.day{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.tl{border-left:3px solid var(--sky);margin:12px 0 0 8px;padding-left:18px}
+.ti{position:relative;background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--line)}
+.ti::before{content:"";position:absolute;left:-27px;top:18px;width:13px;height:13px;border-radius:50%;background:var(--orange);border:3px solid #fff;box-shadow:0 0 0 2px var(--orange)}
+.ti.done{opacity:.6;text-decoration:line-through}
+/* dialog */
+dialog{border:0;border-radius:20px;padding:0;max-width:640px;width:calc(100% - 28px);box-shadow:var(--shadow2);max-height:90vh}
+dialog::backdrop{background:rgba(11,31,58,.55);backdrop-filter:blur(3px)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.db{padding:20px 22px 24px;overflow:auto}
+.x{border:0;background:var(--sky);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.1rem}
+#toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--navy);color:#fff;padding:12px 16px;border-radius:12px;box-shadow:var(--shadow2);animation:in .25s;max-width:340px;font-size:.92rem}
+.toast.ok{background:var(--ok)}.toast.bad{background:var(--bad)}
+@keyframes in{from{transform:translateY(14px);opacity:0}}
+footer{background:var(--navy);color:#b8c9de;margin-top:50px;padding:46px 0 24px}
+footer h3{color:#fff;margin-bottom:10px;font-size:1rem}
+footer a{color:#b8c9de;text-decoration:none;display:block;padding:3px 0;font-size:.92rem}footer a:hover{color:var(--orange)}
+.copy{border-top:1px solid #23406a;margin-top:28px;padding-top:16px;font-size:.82rem}
+.pagehead{background:linear-gradient(120deg,var(--navy),var(--ocean));color:#fff;padding:34px 0}
+.pagehead h1{color:#fff;font-size:clamp(1.6rem,3.4vw,2.4rem)} .pagehead p{opacity:.88;margin-top:4px}
+.hr{height:1px;background:var(--line);margin:16px 0}
+.total{font-size:1.25rem;font-weight:800;color:var(--navy)}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap}
+iframe.map{width:100%;height:320px;border:0;border-radius:14px}
+.menuitem{display:grid;grid-template-columns:1fr 70px 70px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+/* Shared UI refinements */
+html{scroll-padding-top:82px}
+body{line-height:1.6}
+.wrap{max-width:1240px;padding-inline:24px}
+section.block{padding:clamp(36px,5vw,64px) 0}
+h1,h2,h3{letter-spacing:-.025em}
+h2{margin-bottom:8px}
+.sub{margin-bottom:26px}
+header.top{background:rgba(255,255,255,.97);box-shadow:0 2px 10px rgba(11,31,58,.04)}
+.bar{gap:12px}
+.tools select{width:auto;min-width:78px}
+.ibtn{flex:0 0 40px;color:var(--navy)}
+nav.main a{border-radius:9px;transition:background-color .18s,color .18s}
+.btn{border-radius:10px;transition:background-color .18s,transform .18s,box-shadow .18s}
+.btn:active,.ibtn:active,.chip:active{transform:translateY(1px) scale(.98)}
+.btn:not(.ghost):not(.danger){box-shadow:0 3px 8px rgba(150,57,0,.15)}
+.btn.ghost{border-color:#cbd7e2}
+input,select,textarea{border-color:#cbd7e2;border-radius:10px;min-height:44px}
+input::placeholder,textarea::placeholder{color:#667486;opacity:1}
+input:focus,select:focus,textarea:focus{border-color:var(--ocean);box-shadow:0 0 0 3px rgba(14,127,194,.2)}
+:focus-visible{outline-color:#a94200}
+.panel,.filters,.card,.stat,.day{box-shadow:0 3px 16px rgba(11,31,58,.055)}
+.panel{padding:clamp(18px,2.4vw,26px)}
+.filters{padding:18px;margin-bottom:24px}
+.card{transition:transform .2s ease,box-shadow .2s ease}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow2)}
+.card .body{padding:18px}
+.card .actions{gap:8px}
+.card .actions>.btn{flex:1;white-space:nowrap}
+.media{min-height:164px}
+.fav{box-shadow:0 2px 8px rgba(11,31,58,.12);color:var(--navy)}
+.tag{font-size:.73rem}
+.pagehead{padding:clamp(28px,4vw,42px) 0}
+.pagehead p{max-width:68ch}
+.hero{
+  isolation:isolate;
+  min-height:540px;
+  padding:clamp(42px,6vw,72px) 0 64px;
+  background-color:var(--navy);
+  background-image:linear-gradient(120deg,#0b1f3a,#12305a);
+  background-position:center;
+  background-size:cover;
+}
+.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(11,31,58,.42),transparent 48%);z-index:-1}
+.hero svg.scene,.hero .floaty{display:none}
+.hero .wrap{z-index:auto}
+.hero h1{max-width:720px;font-size:clamp(2.3rem,5vw,4rem);line-height:1.08;letter-spacing:-.04em}
+.hero h1 em{color:#ffb16f}
+.hero p.lead{max-width:600px;font-size:1.06rem;line-height:1.65;margin:16px 0 24px}
+.hero .tag{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);font-size:.78rem}
+.online-fast .hero{background-image:linear-gradient(90deg,#0b1f3a 0%,rgba(11,31,58,.96) 38%,rgba(11,31,58,.56) 72%,rgba(11,31,58,.32) 100%),url("https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=2000&q=85");background-position:center,right 42%}
+.search{max-width:1080px;padding:18px;border-radius:16px;box-shadow:0 12px 32px rgba(4,20,39,.24)}
+.search .btn{min-height:46px;white-space:nowrap}
+.chips{margin-top:16px}
+.chip{transition:background-color .18s,transform .18s}
+.empty{border-width:1px;border-style:dashed}
+details{border-radius:12px}
+details[open]{box-shadow:0 3px 12px rgba(11,31,58,.05)}
+footer{margin-top:36px;padding:42px 0 24px}
+footer .grid{gap:28px}
+footer a{transition:color .18s}
+.toast{border-radius:10px}
+@media(max-width:1060px){
+  .bar{gap:10px}
+  nav.main{top:66px}
+}
+@media(max-width:760px){
+  .wrap{padding-inline:18px}
+  section.block{padding:36px 0}
+  .bar{height:62px}
+  nav.main{top:62px}
+  .hero{min-height:0;padding:42px 0 38px;background-image:linear-gradient(120deg,#0b1f3a,#12305a);background-position:center}
+  .online-fast .hero{background-image:linear-gradient(90deg,rgba(11,31,58,.94),rgba(11,31,58,.72)),url("https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80");background-position:center,right center}
+  .hero h1{font-size:clamp(2rem,8vw,3.2rem)}
+  .hero p.lead{font-size:1rem;margin:14px 0 20px}
+  .search{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px;gap:10px}
+  .search .btn{grid-column:1/-1}
+  .g3,.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+  .filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px}
+  .filters>.btn{min-height:44px}
+  .bars .bl{grid-template-columns:minmax(78px,110px) minmax(40px,1fr) 76px;gap:7px}
+  .tbl{min-width:620px}
+  footer .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  .wrap{padding-inline:16px}
+  .logo{font-size:1.12rem;gap:7px}
+  .logo i{width:34px;height:34px}
+  .tools{gap:3px}
+  .tools select{min-width:60px;padding-inline:4px;font-size:.78rem}
+  .ibtn{width:32px;height:36px;flex-basis:32px}
+  .search,.filters{grid-template-columns:minmax(0,1fr)}
+  .search .btn{grid-column:auto}
+  .search .err{grid-column:auto!important}
+  .card .body{padding:15px}
+  .card .actions>.btn{padding-inline:8px;font-size:.79rem}
+  .panel{padding:17px}
+  .db{padding:16px}
+  .dh{padding:14px 16px}
+  footer .grid{grid-template-columns:1fr}
+  .bars .bl{grid-template-columns:1fr auto}
+  .bars .track{grid-column:1/-1;grid-row:2}
+  .account-pill{display:none}
+}
+@media(max-width:360px){
+  .wrap{padding-inline:12px}
+  .bar{gap:6px}
+  .logo{font-size:.78rem;gap:4px}
+  .logo i{width:28px;height:28px}
+  .tools{gap:2px}
+  .tools select{min-width:48px;padding:2px;font-size:.7rem}
+  .ibtn{width:30px;height:32px;flex-basis:30px;font-size:.9rem}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card,.btn,.chip,nav.main a,footer a{transition:none}
+}
+.offline .hero,.slow-network .hero{background-image:linear-gradient(120deg,#0b1f3a,#12305a)!important}
+.offline .hero::before,.slow-network .hero::before{display:none}
+.offline .connection-status{border-bottom-color:#f0d28f}
+</style>
+</head>
+<body>
+<a class="skip" href="#app">Skip to content</a>
+<header class="top">
+  <div class="wrap bar">
+    <a class="logo" href="#/home" aria-label="TravelMate home"><i>✈</i><span>Travel<em>Mate</em></span></a>
+    <nav class="main" id="nav" aria-label="Main">
+      <a href="#/destinations" data-r="destinations">Destinations</a>
+      <a href="#/planner" data-r="planner">Planner</a>
+      <a href="#/route" data-r="route">Routes</a>
+      <a href="#/hotels" data-r="hotels">Hotels</a>
+      <a href="#/transport" data-r="transport">Transport</a>
+      <a href="#/restaurants" data-r="restaurants">Dining</a>
+      <a href="#/attractions" data-r="attractions">Attractions</a>
+      <a href="#/mytrips" data-r="mytrips">My Trips</a>
+    </nav>
+    <div class="tools">
+      <select id="ccy" aria-label="Currency"></select>
+      <span class="account-pill" id="account-pill"></span>
+      <button class="ibtn signout" data-act="signout" aria-label="Sign out" title="Sign out">↪</button>
+      <button class="ibtn" data-act="notes" aria-label="Notifications">🔔<span class="badge" id="nb" hidden>0</span></button>
+      <a class="ibtn" href="#/cart" aria-label="Cart" style="display:grid;place-items:center;text-decoration:none">🛒<span class="badge" id="cb" hidden>0</span></a>
+      <button class="ibtn burger" data-act="burger" aria-label="Menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</header>
+<div class="connection-status" id="connection-status" role="status" aria-live="polite"></div>
+<main id="app" tabindex="-1"></main>
+<footer>
+  <div class="wrap">
+    <div class="grid g4">
+      <div><h3>✈ TravelMate</h3><p>Your entire journey in one place — from your front door to the trip home.</p></div>
+      <div><h3>Plan</h3><a href="#/planner">Trip planner</a><a href="#/itinerary">Itinerary</a><a href="#/budget">Budget</a><a href="#/return">Return home</a></div>
+      <div><h3>Account</h3><a href="#/mytrips">My trips</a><a href="#/bookings">Booking requests</a><a href="#/provider">Provider portal</a><a href="#/admin">Admin preview</a></div>
+      <div><h3>Help</h3><a href="#/support">Support &amp; FAQ</a><a href="#/support">Emergency numbers</a><a href="#/support">Terms</a><a href="#/support">Privacy</a><p style="font-size:.85rem;margin-top:6px">support@example.com (placeholder)</p></div>
+    </div>
+    <div class="copy">© 2026 TravelMate. Listings and reviews may be sample content. Requests are saved only in this browser; no supplier reservations or payments are processed. A production service requires licensed suppliers, secure authentication and a verified payment gateway.</div>
+  </div>
+</footer>
+<dialog id="dlg" aria-labelledby="dt"><div class="dh"><h3 id="dt"></h3><button class="x" data-act="close" aria-label="Close">✕</button></div><div class="db" id="db"></div></dialog>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   TRAVELMATE — single-file application (HTML + CSS + Vanilla JS)
+   Sections: utils · storage · data · api · pages · actions · router
+   ===================================================================== */
+
+/* ---------- utils ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = p => p + '_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const today = () => new Date().toISOString().slice(0, 10);
+const DEFAULT_CURRENCY = 'INR';
+const RATES = { USD: 1, EUR: .92, GBP: .79, INR: 83.2, JPY: 150, AUD: 1.52 };           // STATIC DEMO RATES
+const RATE_STAMP = '2026-10-25 (static demo rates, not live)';
+const money = (usd, c = S.ccy) => { try { return new Intl.NumberFormat(c === 'INR' ? 'en-IN' : undefined, { style: 'currency', currency: c, maximumFractionDigits: c === 'JPY' || c === 'INR' ? 0 : 2 }).format(usd * (RATES[c] || 1)); } catch { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: DEFAULT_CURRENCY, maximumFractionDigits: 0 }).format(usd * RATES[DEFAULT_CURRENCY]); } };
+const toUSD = (amt, c) => amt / (RATES[c] || 1);
+const nightsBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
+const stars = r => `<span class="stars">★ ${Number(r).toFixed(1)}</span>`;
+const priceBand = level => '₹'.repeat(Math.max(1, Math.min(3, Number(level) || 1)));
+const fmtDT = v => v ? new Date(v).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const hhmm = m => { m = Math.round(m); const h = Math.floor(m / 60); return (h ? h + ' h ' : '') + (m % 60) + ' min'; };
+const toMin = t => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
+const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+const isPhone = v => /^[+\d][\d\s\-()]{6,17}$/.test(v);
+
+function toast(msg, type = '') {
+  const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg;
+  $('#toasts').append(t); setTimeout(() => t.remove(), 3800);
+}
+function openModal(title, html) { $('#dt').textContent = title; $('#db').innerHTML = html; const d = $('#dlg'); if (!d.open) d.showModal(); }
+function closeModal() { const d = $('#dlg'); if (d.open) d.close(); }
+
+/* ---------- storage (safe) ---------- */
+const KEY = 'travelmate_demo_v1';
+let storageAvailable = true;
+const defaults = () => ({
+  trips: [], favs: [], cart: [], bookings: [], expenses: [], notes: [], listings: [], audit: [], tickets: [], blocked: {},
+  cur: null, ccy: DEFAULT_CURRENCY, currencyPreferenceSet: false, role: 'traveller', draft: null, payments: [], user: null,
+  providers: [
+    { id: 'p1', name: 'Coral Bay Resort', type: 'Hotel owner', status: 'pending' },
+    { id: 'p2', name: 'Wild Trails Jeeps', type: 'Jeep operator', status: 'pending' },
+    { id: 'p3', name: 'Casa Verde Kitchen', type: 'Restaurant owner', status: 'verified' }],
+  reported: [{ id: 'r1', text: 'Reported review: "Terrible!!! (spam link)"', open: true }, { id: 'r2', text: 'Reported review: "Great but offensive wording"', open: true }]
+});
+function load() { try { const raw = localStorage.getItem(KEY); if (!raw) return defaults(); const o = JSON.parse(raw); return (o && typeof o === 'object') ? { ...defaults(), ...o } : defaults(); } catch { storageAvailable = false; return defaults(); } }
+let S = load();
+const migrateCurrency = !S.currencyPreferenceSet;
+if (migrateCurrency) { S.ccy = DEFAULT_CURRENCY; S.currencyPreferenceSet = true; }
+function save() { let saved = false; try { localStorage.setItem(KEY, JSON.stringify(S)); storageAvailable = true; saved = true; } catch { storageAvailable = false; toast('Could not save to browser storage. Keep this page open to avoid losing changes.', 'bad'); } refreshBadges(); refreshConnection(); return saved; }
+function audit(msg) { S.audit.unshift({ t: new Date().toISOString(), msg }); S.audit = S.audit.slice(0, 80); }
+function notify(msg) {
+  S.notes.unshift({ id: uid('n'), t: new Date().toISOString(), msg, read: false }); save();
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('TravelMate', { body: msg }); } catch {}
+}
+
+/* ---------- demo data (ALL SAMPLE) ---------- */
+const D = [
+  { id: 'bali', name: 'Bali', country: 'Indonesia', region: 'Asia', type: 'beach', emoji: '🏝️', hue: 190, budget: 2, days: '5–8', lat: -8.34, lon: 115.09, desc: 'Rice terraces, surf beaches and temple sunsets.', att: ['Uluwatu Temple', 'Tegallalang Rice Terraces', 'Ubud Monkey Forest'] },
+  { id: 'paris', name: 'Paris', country: 'France', region: 'Europe', type: 'city', emoji: '🗼', hue: 330, budget: 3, days: '3–5', lat: 48.8566, lon: 2.3522, desc: 'Art, cafés and iconic boulevards.', att: ['Louvre Museum', 'Eiffel Tower', 'Montmartre'] },
+  { id: 'kyoto', name: 'Kyoto', country: 'Japan', region: 'Asia', type: 'historic', emoji: '⛩️', hue: 10, budget: 3, days: '4–6', lat: 35.0116, lon: 135.7681, desc: 'Temples, tea houses and bamboo groves.', att: ['Fushimi Inari', 'Kinkaku-ji', 'Arashiyama Bamboo Grove'] },
+  { id: 'maldives', name: 'Maldives', country: 'Maldives', region: 'Asia', type: 'beach', emoji: '🐠', hue: 175, budget: 3, days: '4–7', lat: 3.2028, lon: 73.2207, desc: 'Overwater villas and turquoise lagoons.', att: ['Snorkelling reefs', 'Sandbank picnic', 'Dolphin cruise'] },
+  { id: 'interlaken', name: 'Interlaken', country: 'Switzerland', region: 'Europe', type: 'mountain', emoji: '🏔️', hue: 215, budget: 3, days: '3–6', lat: 46.6863, lon: 7.8632, desc: 'Alpine lakes, cable cars and paragliding.', att: ['Jungfraujoch', 'Lake Brienz', 'Harder Kulm'] },
+  { id: 'munnar', name: 'Munnar', country: 'India', region: 'Asia', type: 'mountain', emoji: '🍃', hue: 130, budget: 1, days: '2–4', lat: 10.0889, lon: 77.0595, desc: 'Misty tea estates and high-range trails.', att: ['Eravikulam National Park', 'Tea Museum', 'Mattupetty Dam'] },
+  { id: 'capetown', name: 'Cape Town', country: 'South Africa', region: 'Africa', type: 'adventure', emoji: '🦁', hue: 25, budget: 2, days: '4–6', lat: -33.9249, lon: 18.4241, desc: 'Table Mountain, vineyards and penguin beaches.', att: ['Table Mountain', 'Cape Point', 'Boulders Beach'] },
+  { id: 'serengeti', name: 'Serengeti', country: 'Tanzania', region: 'Africa', type: 'wildlife', emoji: '🦓', hue: 38, budget: 3, days: '4–7', lat: -2.3333, lon: 34.8333, desc: 'Great Migration and endless savannah.', att: ['Game drives', 'Hot-air balloon', 'Ngorongoro Crater'] },
+  { id: 'nyc', name: 'New York City', country: 'USA', region: 'Americas', type: 'city', emoji: '🗽', hue: 230, budget: 3, days: '3–5', lat: 40.7128, lon: -74.006, desc: 'Skyline, Broadway and Central Park.', att: ['Central Park', 'Statue of Liberty', 'The Met'] },
+  { id: 'machu', name: 'Machu Picchu', country: 'Peru', region: 'Americas', type: 'historic', emoji: '🦙', hue: 150, budget: 2, days: '3–5', lat: -13.1631, lon: -72.545, desc: 'Inca citadel high in the Andes.', att: ['Inca Trail', 'Sun Gate', 'Sacred Valley'] },
+  { id: 'santorini', name: 'Santorini', country: 'Greece', region: 'Europe', type: 'beach', emoji: '🏛️', hue: 205, budget: 3, days: '3–5', lat: 36.3932, lon: 25.4615, desc: 'Whitewashed villages above the caldera.', att: ['Oia sunset', 'Red Beach', 'Akrotiri'] },
+  { id: 'goa', name: 'Goa', country: 'India', region: 'Asia', type: 'beach', emoji: '🌴', hue: 20, budget: 1, days: '3–6', lat: 15.2993, lon: 74.124, desc: 'Beaches, Portuguese heritage and seafood.', att: ['Baga Beach', 'Basilica of Bom Jesus', 'Dudhsagar Falls'] },
+  { id: 'sydney', name: 'Sydney', country: 'Australia', region: 'Oceania', type: 'city', emoji: '🦘', hue: 200, budget: 3, days: '4–6', lat: -33.8688, lon: 151.2093, desc: 'Harbour, opera house and surf culture.', att: ['Opera House', 'Bondi Beach', 'Blue Mountains'] }
+];
+const dName = id => (D.find(d => d.id === id) || {}).name || id;
+const H = [
+  { id: 'h1', name: 'Lotus Garden Resort', loc: 'bali', type: 'Resort', rating: 4.6, price: 140, emoji: '🌺', hue: 170, amen: ['Pool', 'Spa', 'Breakfast', 'WiFi'], dist: 3.2 },
+  { id: 'h2', name: 'Seminyak Surf Hostel', loc: 'bali', type: 'Hostel', rating: 4.1, price: 28, emoji: '🏄', hue: 195, amen: ['WiFi', 'Kitchen'], dist: 1.1 },
+  { id: 'h3', name: 'Hôtel Lumière', loc: 'paris', type: 'Hotel', rating: 4.4, price: 210, emoji: '🥐', hue: 340, amen: ['WiFi', 'Breakfast', 'Gym'], dist: .6 },
+  { id: 'h4', name: 'Sakura Ryokan Inn', loc: 'kyoto', type: 'Hotel', rating: 4.7, price: 185, emoji: '🍵', hue: 8, amen: ['Onsen', 'Breakfast', 'WiFi'], dist: 1.8 },
+  { id: 'h5', name: 'Azure Overwater Villas', loc: 'maldives', type: 'Resort', rating: 4.9, price: 620, emoji: '🌊', hue: 180, amen: ['Pool', 'Spa', 'Breakfast', 'Beach'], dist: 0 },
+  { id: 'h6', name: 'Alpine Peak Chalet', loc: 'interlaken', type: 'Villa', rating: 4.5, price: 260, emoji: '⛷️', hue: 215, amen: ['Fireplace', 'WiFi', 'Breakfast'], dist: 2.4 },
+  { id: 'h7', name: 'Tea Valley Homestay', loc: 'munnar', type: 'Villa', rating: 4.3, price: 45, emoji: '🍃', hue: 128, amen: ['Breakfast', 'WiFi', 'Garden'], dist: 4.5 },
+  { id: 'h8', name: 'Caldera View Suites', loc: 'santorini', type: 'Hotel', rating: 4.8, price: 340, emoji: '🌅', hue: 25, amen: ['Pool', 'Breakfast', 'WiFi'], dist: .9 },
+  { id: 'h9', name: 'Safari Tented Camp', loc: 'serengeti', type: 'Resort', rating: 4.6, price: 390, emoji: '⛺', hue: 36, amen: ['Breakfast', 'Game drives', 'Spa'], dist: 12 },
+  { id: 'h10', name: 'Baga Beach Stay', loc: 'goa', type: 'Hotel', rating: 4.0, price: 55, emoji: '🍹', hue: 18, amen: ['Pool', 'WiFi', 'Beach'], dist: .4 }
+];
+const T = [
+  { id: 't1', name: 'Airport Transfer Sedan', loc: 'bali', cat: 'Airport transfer', price: 22, unit: 'vehicle', cap: 3, rating: 4.5, op: 'Island Rides (demo)', dur: '40 min', emoji: '🚕', hue: 45 },
+  { id: 't2', name: 'Private Car with Driver (day)', loc: 'paris', cat: 'Private car', price: 280, unit: 'vehicle', cap: 4, rating: 4.6, op: 'Seine Chauffeurs (demo)', dur: '8 h', emoji: '🚘', hue: 340 },
+  { id: 't3', name: 'Mount Batur Sunrise Jeep Tour', loc: 'bali', cat: 'Jeep tour', price: 55, unit: 'person', cap: 6, rating: 4.7, op: 'Batur Adventures (demo)', dur: '6 h', emoji: '🚙', hue: 22, meet: 'Ubud Palace gate, 03:00', area: 'Batur caldera trails & lava fields', safety: 'Seat belts mandatory. Helmets for off-road sections. Not suitable during heavy rain.', restr: 'Min age 7. No pregnancy.' },
+  { id: 't4', name: 'Serengeti Game-Drive Safari', loc: 'serengeti', cat: 'Safari', price: 210, unit: 'person', cap: 7, rating: 4.9, op: 'Savannah Guides (demo)', dur: '9 h', emoji: '🦁', hue: 36, meet: 'Seronera airstrip, 06:00', area: 'Central Serengeti (permit zone A)', safety: 'Stay inside vehicle. Follow ranger instructions. Carry water & sun protection.', restr: 'Min age 6. Park fees included in demo price.' },
+  { id: 't5', name: 'Western Ghats Jeep Safari', loc: 'munnar', cat: 'Jeep tour', price: 18, unit: 'person', cap: 6, rating: 4.4, op: 'Hill Riders (demo)', dur: '4 h', emoji: '🚙', hue: 128, meet: 'Munnar bus stand, 08:30', area: 'Tea estates & Kolukkumalai road', safety: 'Rough terrain; hold on at all times.', restr: 'Min age 5. Weather dependent.' },
+  { id: 't6', name: 'Compact Rental Car (day)', loc: 'interlaken', cat: 'Rental vehicle', price: 70, unit: 'vehicle', cap: 4, rating: 4.2, op: 'AlpDrive (demo)', dur: '24 h', emoji: '🚗', hue: 215 },
+  { id: 't7', name: 'City Taxi (hourly)', loc: 'kyoto', cat: 'Local taxi', price: 45, unit: 'vehicle', cap: 4, rating: 4.5, op: 'Kyoto Cab Co-op (demo)', dur: '1 h', emoji: '🚖', hue: 10 },
+  { id: 't8', name: 'Group Minibus Day Tour', loc: 'goa', cat: 'Group transport', price: 14, unit: 'person', cap: 14, rating: 4.1, op: 'Goa Trails (demo)', dur: '8 h', emoji: '🚐', hue: 20 }
+];
+const R = [
+  { id: 'r1', name: 'Warung Sari Rasa', loc: 'bali', cuisine: 'Indonesian', rating: 4.5, price: 1, diet: ['vegetarian', 'vegan'], dist: .8, emoji: '🍛', hue: 30, delivery: true, menu: [{ n: 'Nasi Goreng', p: 5, v: 0 }, { n: 'Gado-Gado', p: 4.5, v: 1 }, { n: 'Satay Platter', p: 7, v: 0 }, { n: 'Tempeh Curry', p: 5, v: 1 }] },
+  { id: 'r2', name: 'Le Petit Bistro', loc: 'paris', cuisine: 'French', rating: 4.4, price: 3, diet: ['vegetarian'], dist: .4, emoji: '🥖', hue: 340, delivery: false, menu: [{ n: 'Onion Soup', p: 12, v: 1 }, { n: 'Duck Confit', p: 29, v: 0 }, { n: 'Ratatouille', p: 18, v: 1 }, { n: 'Crème Brûlée', p: 9, v: 1 }] },
+  { id: 'r3', name: 'Ramen Hanabi', loc: 'kyoto', cuisine: 'Japanese', rating: 4.6, price: 2, diet: [], dist: .6, emoji: '🍜', hue: 8, delivery: true, menu: [{ n: 'Shoyu Ramen', p: 11, v: 0 }, { n: 'Veg Miso Ramen', p: 10, v: 1 }, { n: 'Gyoza (6)', p: 6, v: 0 }] },
+  { id: 'r4', name: 'Malabar Spice Kitchen', loc: 'munnar', cuisine: 'South Indian', rating: 4.3, price: 1, diet: ['vegetarian', 'halal'], dist: 1.2, emoji: '🍛', hue: 128, delivery: false, menu: [{ n: 'Veg Meals', p: 3, v: 1 }, { n: 'Appam & Stew', p: 4, v: 0 }, { n: 'Masala Dosa', p: 2.5, v: 1 }] },
+  { id: 'r5', name: 'Sunset Taverna', loc: 'santorini', cuisine: 'Greek', rating: 4.7, price: 3, diet: ['vegetarian'], dist: .3, emoji: '🫒', hue: 210, delivery: false, menu: [{ n: 'Greek Salad', p: 12, v: 1 }, { n: 'Grilled Octopus', p: 24, v: 0 }, { n: 'Moussaka', p: 18, v: 0 }] },
+  { id: 'r6', name: 'Fisherman’s Shack', loc: 'goa', cuisine: 'Seafood', rating: 4.2, price: 2, diet: ['halal'], dist: .2, emoji: '🦐', hue: 18, delivery: true, menu: [{ n: 'Prawn Curry', p: 8, v: 0 }, { n: 'Fish Thali', p: 7, v: 0 }, { n: 'Veg Pulao', p: 4, v: 1 }] }
+];
+const A = [
+  { id: 'a1', name: 'Ubud Monkey Forest Entry', loc: 'bali', cat: 'Parks & gardens', price: 6, child: 4, dur: '2 h', open: '09:00', close: '18:00', slots: ['09:00', '11:00', '14:00'], age: 'All ages', safety: 'Do not feed or touch monkeys.', access: 'Partly step-free', emoji: '🐒', hue: 120, rating: 4.3 },
+  { id: 'a2', name: 'Louvre Museum Skip-the-Line', loc: 'paris', cat: 'Museums', price: 22, child: 0, dur: '3 h', open: '09:00', close: '18:00', slots: ['09:30', '12:00', '15:00'], age: 'All ages (under 18 free)', safety: 'Bag checks at entry.', access: 'Step-free, wheelchairs available', emoji: '🖼️', hue: 330, rating: 4.7 },
+  { id: 'a3', name: 'Fushimi Inari Guided Walk', loc: 'kyoto', cat: 'Guided tours', price: 35, child: 20, dur: '3 h', open: '06:00', close: '19:00', slots: ['07:00', '09:00', '16:00'], age: 'All ages', safety: 'Many steps; wear sturdy shoes.', access: 'Not step-free', emoji: '⛩️', hue: 8, rating: 4.8 },
+  { id: 'a4', name: 'Maldives Snorkel & Dolphin Cruise', loc: 'maldives', cat: 'Boating', price: 85, child: 50, dur: '3.5 h', open: '08:00', close: '17:00', slots: ['09:00', '14:00'], age: 'Min age 6', safety: 'Life jackets provided; swimmers only for snorkel.', access: 'Boat boarding assistance', emoji: '🐬', hue: 180, rating: 4.9 },
+  { id: 'a5', name: 'Jungfrau Region Paragliding', loc: 'interlaken', cat: 'Adventure', price: 190, child: 0, dur: '1.5 h', open: '09:00', close: '16:00', slots: ['10:00', '13:00'], age: 'Min age 12, max weight 110 kg', safety: 'Weather dependent. Certified pilots only.', access: 'Not suitable for reduced mobility', emoji: '🪂', hue: 215, rating: 4.8 },
+  { id: 'a6', name: 'Eravikulam Park Entry & Trek', loc: 'munnar', cat: 'Trekking', price: 4, child: 2, dur: '4 h', open: '07:30', close: '16:00', slots: ['08:00', '10:00'], age: 'All ages', safety: 'Stay on marked trails.', access: 'Limited', emoji: '🥾', hue: 130, rating: 4.5 },
+  { id: 'a7', name: 'Table Mountain Cable Car', loc: 'capetown', cat: 'Local sightseeing', price: 30, child: 15, dur: '2 h', open: '08:00', close: '19:00', slots: ['09:00', '12:00', '16:00'], age: 'All ages', safety: 'Closes in high winds.', access: 'Step-free to cable car', emoji: '🚡', hue: 25, rating: 4.6 },
+  { id: 'a8', name: 'Akrotiri Archaeological Site', loc: 'santorini', cat: 'Historical places', price: 14, child: 0, dur: '1.5 h', open: '08:30', close: '15:30', slots: ['09:00', '11:00', '13:00'], age: 'All ages', safety: 'Covered site; uneven walkways.', access: 'Partly accessible', emoji: '🏺', hue: 205, rating: 4.4 }
+];
+const CATS = ['Accommodation', 'Transport', 'Jeep & Safari', 'Food', 'Attractions', 'Shopping', 'Miscellaneous', 'Taxes & fees'];
+const FAQ = [
+  ['Are the bookings real?', 'No. This build runs in demo mode with sample inventory. Real bookings need licensed suppliers and a secure backend.'],
+  ['Is my data safe?', 'Everything is saved only in this browser (LocalStorage). No passwords or payment details are ever stored.'],
+  ['Can I use the planner offline?', 'Your demo profile and saved trips stay in this browser. Live place searches and map previews need internet; saved sample destinations can still use rough route estimates offline.'],
+  ['How does the trip code work?', 'The demo code is generated and checked on this device. It is not sent by SMS or email and is not secure verification. Real OTP delivery needs a backend and messaging service.'],
+  ['Can I plan a trip with no internet APIs?', 'Yes. Routes fall back to a clearly-labelled straight-line estimate when live routing is unreachable.'],
+  ['How do payments work in production?', 'A payment gateway’s hosted checkout plus server-side verification. A browser success message is never proof of payment.'],
+  ['Does TravelMate plan the way home?', 'Yes — the Return Home planner checks buffers, checkout times and warns when your plan leaves too little time.']
+];
+
+/* ---------- api.js section: real external services (optional) ---------- */
+const CONFIG = { weatherKey: '', routingBase: 'https://router.project-osrm.org' }; // Put only PUBLIC config here. Private keys belong on a server.
+async function fetchJSON(url, ms = 8000) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+  try { const r = await fetch(url, { signal: c.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+async function geocode(q) {
+  const key = q.trim().toLowerCase();
+  const local = D.find(d => d.name.toLowerCase() === key || (d.name + ', ' + d.country).toLowerCase() === key);
+  if (local) return { lat: local.lat, lon: local.lon, name: local.name, src: 'demo-table' };
+  if (!navigator.onLine) throw new Error('You are offline. Place lookup is unavailable for this location.');
+  if (isSlowConnection()) throw new Error('Place lookup is paused on this slow connection. Try a sample destination or reconnect.');
+  const j = await fetchJSON('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q));
+  if (!j.length) throw new Error('Place not found: ' + q);
+  return { lat: +j[0].lat, lon: +j[0].lon, name: j[0].display_name.split(',').slice(0, 2).join(','), src: 'OpenStreetMap Nominatim' };
+}
+const hav = (a, b) => { const r = x => x * Math.PI / 180, dLat = r(b.lat - a.lat), dLon = r(b.lon - a.lon); const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLon / 2) ** 2; return 12742 * Math.asin(Math.sqrt(h)); };
+function routeEstimate(pts, mode, reason) {
+  const speed = { driving: 55, walking: 4.8, cycling: 15, transit: 35 }[mode];
+  const legs = pts.slice(1).map((p, i) => { const km = hav(pts[i], p) * 1.3; return { km, min: km / speed * 60 }; });
+  const note = mode === 'transit'
+    ? `Public-transport schedules need a transit service. Showing an estimate only: straight-line distance × 1.3 at an assumed average speed. ${reason}`
+    : `Showing a rough estimate only: straight-line distance × 1.3 at an assumed average speed. ${reason}`;
+  return { pts, live: false, mode, main: { km: legs.reduce((s, l) => s + l.km, 0), min: legs.reduce((s, l) => s + l.min, 0), legs }, alts: [], note };
+}
+async function calcRoute(places, mode) {
+  const pts = []; for (const p of places) pts.push(await geocode(p));
+  if (!navigator.onLine) return routeEstimate(pts, mode, 'You are offline, so no map service was contacted.');
+  if (isSlowConnection()) return routeEstimate(pts, mode, 'Live routing was skipped to reduce data use on this slow connection.');
+  const prof = { driving: 'driving', walking: 'foot', cycling: 'bike' }[mode];
+  if (prof) {
+    try {
+      const coords = pts.map(p => p.lon + ',' + p.lat).join(';');
+      const j = await fetchJSON(`${CONFIG.routingBase}/route/v1/${prof}/${coords}?overview=false&alternatives=true&steps=false`);
+      if (j.code !== 'Ok') throw new Error(j.code);
+      const mk = r => ({ km: r.distance / 1000, min: r.duration / 60, legs: r.legs.map(l => ({ km: l.distance / 1000, min: l.duration / 60 })) });
+      return { pts, live: true, mode, main: mk(j.routes[0]), alts: j.routes.slice(1).map(mk), note: 'Live result from the OSRM public routing server. Travel time excludes live traffic.' };
+    } catch (e) { /* fall through to estimate */ }
+  }
+  return routeEstimate(pts, mode, 'Live routing was unreachable.');
+}
+const gmapsLink = (pts, mode) => { const f = p => p.lat + ',' + p.lon; return 'https://www.google.com/maps/dir/?api=1&origin=' + f(pts[0]) + '&destination=' + f(pts[pts.length - 1]) + (pts.length > 2 ? '&waypoints=' + pts.slice(1, -1).map(f).join('%7C') : '') + '&travelmode=' + ({ walking: 'walking', cycling: 'bicycling', transit: 'transit' }[mode] || 'driving'); };
+const osmEmbed = pts => { const la = pts.map(p => p.lat), lo = pts.map(p => p.lon), pad = .15; const bb = [Math.min(...lo) - pad, Math.min(...la) - pad, Math.max(...lo) + pad, Math.max(...la) + pad].join('%2C'); const l = pts[pts.length - 1]; return `https://www.openstreetmap.org/export/embed.html?bbox=${bb}&layer=mapnik&marker=${l.lat}%2C${l.lon}`; };
+
+/* ---------- trip helpers ---------- */
+const curTrip = () => S.trips.find(t => t.id === S.cur) || S.trips[0] || null;
+function tripStatus(t) {
+  if (t.status === 'cancelled') return 'cancelled'; if (t.status === 'completed') return 'completed';
+  const n = Date.now(), a = new Date(t.depart).getTime(), b = new Date(t.ret).getTime();
+  return n < a ? 'upcoming' : n <= b ? 'progress' : 'completed';
+}
+function tripDays(t) { const out = []; const s = new Date(t.depart.slice(0, 10)), e = new Date(t.ret.slice(0, 10)); for (let d = new Date(s); d <= e && out.length < 60; d.setDate(d.getDate() + 1)) out.push(d.toISOString().slice(0, 10)); return out; }
+const spent = (t, cat) => S.expenses.filter(e => e.trip === t.id && !e.refund && (!cat || e.cat === cat)).reduce((s, e) => s + e.usd, 0);
+const refunded = t => S.expenses.filter(e => e.trip === t.id && e.refund).reduce((s, e) => s + e.usd, 0);
+function planFor(t, cat) { return t.plan && t.plan[cat] != null ? t.plan[cat] : (t.budgetUSD * ({ Accommodation: .35, Transport: .2, 'Jeep & Safari': .08, Food: .15, Attractions: .1, Shopping: .05, Miscellaneous: .04, 'Taxes & fees': .03 }[cat])); }
+function itinWarnings(t) {
+  const w = [];
+  Object.entries(t.itin || {}).forEach(([day, items]) => {
+    items.forEach((it, i) => {
+      if (it.open && it.close && (toMin(it.start) < toMin(it.open) || toMin(it.end) > toMin(it.close))) w.push(`${day}: “${it.name}” falls outside opening hours (${it.open}–${it.close}).`);
+      const nx = items[i + 1]; if (!nx) return;
+      if (toMin(nx.start) < toMin(it.end)) w.push(`${day}: “${it.name}” overlaps with “${nx.name}”.`);
+      else if (it.travel && toMin(nx.start) - toMin(it.end) < it.travel) w.push(`${day}: only ${toMin(nx.start) - toMin(it.end)} min between “${it.name}” and “${nx.name}” but travel needs ~${it.travel} min.`);
+    });
+  });
+  return w;
+}
+
+/* ---------- UI building blocks ---------- */
+const bg = h => `background:linear-gradient(135deg,hsl(${h},70%,86%),hsl(${(h + 40) % 360},75%,72%))`;
+function destCard(d) {
+  const f = S.favs.includes(d.id);
+  return `<article class="card"><div class="media" style="${bg(d.hue)}"><span class="tag">${d.type}</span><button class="fav" data-act="fav" data-id="${d.id}" aria-label="${f ? 'Remove from' : 'Add to'} favourites" aria-pressed="${f}">${f ? '❤️' : '🤍'}</button><span aria-hidden="true">${d.emoji}</span></div>
+  <div class="body"><h3>${esc(d.name)}, <span class="meta">${esc(d.country)}</span></h3><p class="meta">${esc(d.desc)}</p><p class="meta">Suggested stay: ${d.days} days · ${priceBand(d.budget)}</p>
+  <div class="actions"><button class="btn sm sec" data-act="destview" data-id="${d.id}">Details</button><button class="btn sm" data-act="destadd" data-id="${d.id}">+ Add to trip</button></div></div></article>`;
+}
+const CATDEF = {
+  hotels: { data: H, card: h => ({ cat: h.type, meta: `📍 ${dName(h.loc)} · ${h.dist} km from centre`, extra: h.amen.slice(0, 3).join(' · '), price: `${money(h.price)} <small>/ night</small>` }) },
+  transport: { data: T, card: t => ({ cat: t.cat, meta: `📍 ${dName(t.loc)} · ${t.dur} · up to ${t.cap} pax`, extra: t.op, price: `${money(t.price)} <small>/ ${t.unit}</small>` }) },
+  restaurants: { data: R, card: r => ({ cat: r.cuisine, meta: `📍 ${dName(r.loc)} · ${r.dist} km`, extra: r.diet.length ? 'Labels (demo): ' + r.diet.join(', ') : 'No dietary labels', price: priceBand(r.price) }) },
+  attractions: { data: A, card: a => ({ cat: a.cat, meta: `📍 ${dName(a.loc)} · ${a.dur} · ${a.open}–${a.close}`, extra: a.age, price: `${money(a.price)} <small>/ adult</small>` }) }
+};
+function itemCard(kind, it) {
+  const c = CATDEF[kind].card(it); const maxP = 0;
+  return `<article class="card"><div class="media" style="${bg(it.hue)}"><span aria-hidden="true">${it.emoji}</span></div>
+  <div class="body"><div class="row sp"><span class="tag">${esc(c.cat)}</span>${stars(it.rating)}</div><h3>${esc(it.name)}</h3><p class="meta">${c.meta}</p><p class="meta">${esc(c.extra)}</p><p class="meta">Sample listing. Availability and prices are not live.</p>
+  <div class="row sp" style="margin-top:4px"><span class="price">${c.price}</span></div>
+  <div class="actions"><button class="btn sm sec" data-act="view" data-k="${kind}" data-id="${it.id}">Details</button><button class="btn sm" data-act="book" data-k="${kind}" data-id="${it.id}">Request booking</button></div></div></article>`;
+}
+const pageHead = (t, p) => `<div class="pagehead"><div class="wrap"><h1>${t}</h1><p>${p}</p></div></div>`;
+const empty = (ic, t, p, btn = '') => `<div class="empty"><div class="big">${ic}</div><h3>${t}</h3><p>${p}</p>${btn}</div>`;
+
+/* ---------- PAGES ---------- */
+const PAGES = {};
+let pendingTrip = null;
+let pendingTripOtp = null;
+let pendingTripOtpExpires = 0;
+let pendingTripOtpAttempts = 0;
+function issueTripOtp() {
+  pendingTripOtp = String(Math.floor(100000 + Math.random() * 900000));
+  pendingTripOtpExpires = Date.now() + 5 * 60 * 1000;
+  pendingTripOtpAttempts = 0;
+  const code = $('#trip-code');
+  if (code) code.textContent = pendingTripOtp;
+  const error = $('#trip-otp-error');
+  if (error) error.textContent = '';
+}
+function showTripOtp(data) {
+  pendingTrip = data;
+  openModal('Confirm your trip', `  <div class="alert info">Enter the one-time code shown here to finish saving your trip. It is generated and checked on this device, not sent by SMS or email, and does not provide secure verification.</div>
+  <span class="otp-code" id="trip-code" aria-label="One-time code"></span>
+    <form data-form="tripotp" novalidate>
+      <div class="field"><label for="trip-otp">One-time code</label><input id="trip-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="Enter the six-digit code"><div class="err" id="trip-otp-error" role="alert"></div></div>
+      <div class="otp-actions"><button class="btn" type="submit">Confirm trip</button><button class="btn ghost" type="button" data-act="otpnew">Generate new code</button></div>
+    </form>`);
+  issueTripOtp();
+}
+function finishTrip(data) {
+  const t = { id: uid('trip'), status: 'planned', itin: {}, created: new Date().toISOString(), checklist: defaultChecklist(), ...data };
+  S.trips.push(t);
+  S.cur = t.id;
+  audit('Created trip ' + t.name);
+  notify(`Trip “${t.name}” created. Don't forget to plan your return home!`);
+  toast('Trip saved on this device', 'ok');
+  S.draft = null;
+  save();
+  location.hash = '#/itinerary';
+  if (location.hash === '#/itinerary') route();
+}
+
+PAGES.login = () => `
+<section class="login-shell">
+  <div class="login-card">
+    <div class="login-mark" aria-hidden="true">✈</div>
+    <p class="tag">Your trips, on this device</p>
+    <h1 style="margin-top:12px">Welcome to TravelMate</h1>
+    <p class="sub">Sign in to plan and keep your travel details together.</p>
+    <div class="local-note">Your profile and trip data stay in this browser. Optional live route lookups use the internet only when requested.</div>
+    <form data-form="login" novalidate>
+      <div class="field"><label for="login-name">Your name</label><input id="login-name" name="name" autocomplete="name" required maxlength="80" placeholder="How should we address you?"><div class="err" data-e="name"></div></div>
+      <div class="field"><label for="login-email">Email address</label><input id="login-email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"><div class="err" data-e="email"></div></div>
+      <button class="btn" type="submit">Continue to TravelMate</button>
+    </form>
+    <p class="meta" style="margin-top:14px">Local profile only. This is not secure account authentication.</p>
+  </div>
+</section>`;
+
+PAGES.home = () => {
+  const dt = new Date(); dt.setDate(dt.getDate() + 30); const d1 = dt.toISOString().slice(0, 10); dt.setDate(dt.getDate() + 7); const d2 = dt.toISOString().slice(0, 10);
+  return `
+<section class="hero">
+  <span class="floaty" style="left:8%;top:18%">☁️</span><span class="floaty" style="right:12%;top:12%;animation-delay:1.5s">✈️</span><span class="floaty" style="right:28%;top:36%;animation-delay:3s;font-size:1.4rem">☁️</span>
+  <svg class="scene" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+    <circle cx="1130" cy="120" r="70" fill="#ffd27a" opacity=".95"/>
+    <path d="M0 220 L180 90 L300 180 L460 60 L640 210 L760 120 L900 220 L1100 100 L1260 200 L1440 130 V320 H0Z" fill="#0b3a6b" opacity=".75"/>
+    <path d="M0 250 Q180 200 360 245 T720 240 T1080 245 T1440 235 V320 H0Z" fill="#0e7fc2" opacity=".9"/>
+    <path d="M0 285 Q200 250 400 282 T800 280 T1200 278 T1440 275 V320 H0Z" fill="#0a2a52"/></svg>
+  <div class="wrap">
+    <span class="tag" style="margin-bottom:14px">🌍 Worldwide travel management</span>
+    <h1>Your Entire Journey <em>in One Place</em></h1>
+    <p class="lead">Plan routes, book stays, jeeps and taxis, find great food, collect attraction tickets, track your budget and get home on time — all from one beautiful dashboard.</p>
+    <form class="search" data-form="homesearch" novalidate>
+      <div class="field"><label for="hf">Starting from</label><input id="hf" name="from" placeholder="e.g. Coimbatore" required></div>
+      <div class="field"><label for="ht">Destination</label><input id="ht" name="to" list="dl" placeholder="e.g. Bali" required><datalist id="dl">${D.map(d => `<option value="${d.name}">`).join('')}</datalist></div>
+      <div class="field"><label for="hd">Departure</label><input id="hd" type="date" name="dep" value="${d1}" min="${today()}"></div>
+      <div class="field"><label for="hr">Return</label><input id="hr" type="date" name="ret" value="${d2}" min="${today()}"></div>
+      <div class="field"><label for="hn">Travellers</label><input id="hn" type="number" name="n" value="2" min="1" max="20"></div>
+      <button class="btn" type="submit">🔍 Search Trips</button>
+      <div class="err" id="hserr" style="grid-column:1/-1"></div>
+    </form>
+    <div class="chips" aria-label="Quick picks">${['bali', 'paris', 'kyoto', 'maldives', 'munnar'].map(i => `<button class="chip" data-act="quick" data-id="${i}">${D.find(d => d.id === i).emoji} ${dName(i)}</button>`).join('')}</div>
+  </div>
+</section>
+<section class="block"><div class="wrap"><h2>Popular destinations</h2><p class="sub">Handpicked places from every continent.</p><div class="grid g3">${D.slice(0, 6).map(destCard).join('')}</div><p style="text-align:center;margin-top:20px"><a class="btn ghost" href="#/destinations">Explore all destinations →</a></p></div></section>
+<section class="block" style="background:#fff"><div class="wrap"><h2>Recommended hotels &amp; resorts</h2><p class="sub">Sample listings. Availability and prices are not live.</p><div class="grid g3">${[H[0], H[4], H[7]].map(h => itemCard('hotels', h)).join('')}</div></div></section>
+<section class="block"><div class="wrap"><h2>Jeep tours &amp; activities</h2><p class="sub">Safaris, sunrise tours and guided adventures.</p><div class="grid g3">${[T[2], T[3], A[4]].map((x, i) => itemCard(i < 2 ? 'transport' : 'attractions', x)).join('')}</div></div></section>
+<section class="block" style="background:#fff"><div class="wrap"><h2>Recommended restaurants</h2><p class="sub">Reserve a table or pre-order a meal — two separate workflows.</p><div class="grid g3">${[R[0], R[2], R[4]].map(r => itemCard('restaurants', r)).join('')}</div></div></section>
+<section class="block"><div class="wrap"><h2>Featured attractions</h2><div class="grid g3">${[A[1], A[2], A[3]].map(a => itemCard('attractions', a)).join('')}</div></div></section>
+<section class="block" style="background:#fff"><div class="wrap"><h2 style="text-align:center">Why choose TravelMate</h2><p class="sub" style="text-align:center">One platform instead of ten browser tabs.</p>
+<div class="grid g4">${[['🧭', 'All-in-one', 'Routes, stays, food, tickets & budget together.'], ['🔁', 'Door to door', 'The return journey is planned from day one.'], ['🛡️', 'Clear estimates', 'Sample listings and estimates are clearly identified.'], ['💸', 'Budget aware', 'Planned vs actual spend in any currency.']].map(f => `<div class="feat"><div class="ic">${f[0]}</div><h3>${f[1]}</h3><p class="meta">${f[2]}</p></div>`).join('')}</div></div></section>
+<section class="block"><div class="wrap"><h2>How it works</h2><div class="grid g4 steps" style="margin-top:20px">${[['Plan', 'Set destinations, dates, travellers and budget.'], ['Discover', 'Browse stays, jeeps, food and attractions.'], ['Book', 'Add to cart, review price breakdown, check out.'], ['Travel & return', 'Follow the itinerary and get home on time.']].map(s => `<div class="step"><h3>${s[0]}</h3><p>${s[1]}</p></div>`).join('')}</div></div></section>
+<section class="block" style="background:#fff"><div class="wrap"><h2>Sample traveller reviews</h2><div class="grid g3" style="margin-top:14px">${[['Aisha K.', 'The itinerary warnings saved us from a missed flight home!'], ['Marco R.', 'Loved seeing planned vs actual budget as we travelled.'], ['Priya S.', 'Jeep safari details and safety info were so clear.']].map(r => `<div class="panel"><p class="stars">★★★★★</p><p class="quote">“${r[1]}”</p><p class="meta" style="margin-top:8px">${r[0]} (example)</p></div>`).join('')}</div></div></section>
+<section class="block"><div class="wrap" style="max-width:800px"><h2>Frequently asked questions</h2><div style="margin-top:16px">${FAQ.map(f => `<details><summary>${f[0]}</summary><p>${f[1]}</p></details>`).join('')}</div></div></section>`;
+};
+
+PAGES.destinations = () => `${pageHead('Destination Explorer', 'Search the world — mountains, beaches, cities, wildlife and more.')}
+<section class="block"><div class="wrap">
+<div class="filters" data-filters="dest">
+ <div class="field"><label for="dq">Search</label><input id="dq" data-f="q" placeholder="Name, country…"></div>
+ <div class="field"><label for="dr">Region</label><select id="dr" data-f="region"><option value="">All</option>${[...new Set(D.map(d => d.region))].map(x => `<option>${x}</option>`).join('')}</select></div>
+ <div class="field"><label for="dc">Country</label><select id="dc" data-f="country"><option value="">All</option>${[...new Set(D.map(d => d.country))].sort().map(x => `<option>${x}</option>`).join('')}</select></div>
+ <div class="field"><label for="dt2">Type</label><select id="dt2" data-f="type"><option value="">All</option>${[...new Set(D.map(d => d.type))].map(x => `<option>${x}</option>`).join('')}</select></div>
+ <div class="field"><label for="db2">Budget</label><select id="db2" data-f="budget"><option value="">Any</option><option value="1">₹ Budget</option><option value="2">₹₹ Mid</option><option value="3">₹₹₹ Premium</option></select></div>
+ <button class="btn ghost" data-act="reset" data-k="dest">↺ Reset</button></div>
+<p class="meta" id="count" aria-live="polite"></p><div class="grid g3" id="list"></div></div></section>`;
+function destFilter() {
+  const f = {}; $$('[data-filters="dest"] [data-f]').forEach(e => f[e.dataset.f] = e.value.trim().toLowerCase());
+  const r = D.filter(d => (!f.q || (d.name + d.country + d.desc).toLowerCase().includes(f.q)) && (!f.region || d.region.toLowerCase() === f.region) && (!f.country || d.country.toLowerCase() === f.country) && (!f.type || d.type === f.type) && (!f.budget || d.budget === +f.budget));
+  $('#count').textContent = r.length + ' destination' + (r.length === 1 ? '' : 's') + ' found';
+  $('#list').innerHTML = r.length ? r.map(destCard).join('') : `<div style="grid-column:1/-1">${empty('🗺️', 'No destinations match', 'Try clearing a filter.')}</div>`;
+}
+
+function catalogPage(kind, title, sub, catOptions, sortOpts) {
+  return `${pageHead(title, sub)}<section class="block"><div class="wrap">
+<div class="filters" data-filters="${kind}">
+ <div class="field"><label for="${kind}q">Search / destination</label><input id="${kind}q" data-f="q" placeholder="Name, city, keyword…"></div>
+ <div class="field"><label for="${kind}c">Category</label><select id="${kind}c" data-f="cat"><option value="">All</option>${catOptions.map(x => `<option>${x}</option>`).join('')}</select></div>
+ <div class="field"><label for="${kind}p">Max price (${S.ccy})</label><input id="${kind}p" data-f="max" type="number" min="0" placeholder="No limit"></div>
+ <div class="field"><label for="${kind}r">Min rating</label><select id="${kind}r" data-f="rate"><option value="0">Any</option><option value="4">4.0+</option><option value="4.5">4.5+</option></select></div>
+ ${kind === 'restaurants' ? `<div class="field"><label for="rdiet">Dietary</label><select id="rdiet" data-f="diet"><option value="">Any</option><option>vegetarian</option><option>vegan</option><option>halal</option></select></div>` : ''}
+ ${kind === 'hotels' ? `<div class="field"><label for="hfac">Facility</label><select id="hfac" data-f="fac"><option value="">Any</option>${[...new Set(H.flatMap(h => h.amen))].sort().map(x => `<option>${x}</option>`).join('')}</select></div>
+ <div class="field"><label for="hdist">Max distance (km)</label><input id="hdist" data-f="dist" type="number" min="0" step=".5" placeholder="Any"></div>` : ''}
+ <div class="field"><label for="${kind}s">Sort by</label><select id="${kind}s" data-f="sort">${sortOpts}</select></div>
+ <button class="btn ghost" data-act="reset" data-k="${kind}">↺ Reset</button></div>
+<div class="alert info">These are sample listings. Availability and prices are not live, and no supplier has confirmed a booking.</div>
+<p class="meta" id="count" aria-live="polite"></p><div class="grid g3" id="list"></div></div></section>`;
+}
+const SORT = '<option value="rel">Relevance</option><option value="pa">Price: low to high</option><option value="pd">Price: high to low</option><option value="rt">Rating</option>';
+PAGES.hotels = () => catalogPage('hotels', 'Hotels &amp; Stays', 'Resorts, villas, hostels and boutique hotels.', ['Hotel', 'Resort', 'Hostel', 'Villa'], SORT);
+PAGES.transport = () => catalogPage('transport', 'Jeeps, Taxis &amp; Transport', 'Airport transfers, private cars, rentals, jeep safaris and group tours.', ['Local taxi', 'Airport transfer', 'Private car', 'Rental vehicle', 'Jeep tour', 'Safari', 'Group transport'], SORT);
+PAGES.restaurants = () => catalogPage('restaurants', 'Restaurants &amp; Food', 'Discover places to eat, reserve a table or pre-order meals.', [...new Set(R.map(r => r.cuisine))], SORT);
+PAGES.attractions = () => catalogPage('attractions', 'Attractions &amp; Tickets', 'Museums, adventure, wildlife, culture and guided tours.', [...new Set(A.map(a => a.cat))], SORT);
+function catFilter(kind) {
+  const f = {}; $$(`[data-filters="${kind}"] [data-f]`).forEach(e => f[e.dataset.f] = e.value.trim().toLowerCase());
+  const pr = x => kind === 'restaurants' ? x.price : x.price;
+  let r = CATDEF[kind].data.filter(x => {
+    const txt = (x.name + ' ' + dName(x.loc) + ' ' + (x.cat || x.type || x.cuisine) + ' ' + (x.op || '')).toLowerCase();
+    const cat = (x.cat || x.type || x.cuisine).toLowerCase();
+    const maxUSD = f.max ? toUSD(+f.max, S.ccy) : Infinity;
+    return (!f.q || txt.includes(f.q)) && (!f.cat || cat === f.cat) && (kind === 'restaurants' || pr(x) <= maxUSD) && x.rating >= +(f.rate || 0)
+      && (!f.diet || x.diet.includes(f.diet)) && (!f.fac || x.amen.map(a => a.toLowerCase()).includes(f.fac)) && (!f.dist || x.dist <= +f.dist);
+  });
+  const s = f.sort; if (s === 'pa') r.sort((a, b) => a.price - b.price); if (s === 'pd') r.sort((a, b) => b.price - a.price); if (s === 'rt') r.sort((a, b) => b.rating - a.rating);
+  $('#count').textContent = r.length + ' result' + (r.length === 1 ? '' : 's');
+  $('#list').innerHTML = r.length ? r.map(x => itemCard(kind, x)).join('') : `<div style="grid-column:1/-1">${empty('🔎', 'Nothing matches your filters', 'Reset or widen your search.')}</div>`;
+}
+
+/* ----- planner ----- */
+PAGES.planner = () => {
+  const e = S.editTrip ? S.trips.find(t => t.id === S.editTrip) : null; const dr = S.draft || {};
+  const v = (k, d = '') => esc(e ? e[k] ?? d : dr[k] ?? d);
+  const dep = new Date(); dep.setDate(dep.getDate() + 30); dep.setHours(9, 0, 0, 0);
+  const iso = x => new Date(x.getTime() - x.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  const def = iso(dep), def2 = iso(new Date(dep.getTime() + 7 * 864e5));
+  const sel = (k, opts, d) => opts.map(o => `<option ${(e ? e[k] : dr[k] || d) === o ? 'selected' : ''}>${o}</option>`).join('');
+  return `${pageHead(e ? 'Edit Trip' : 'Trip Planner', 'Build a complete trip: start, stops, dates, preferences, budget — and the way home.')}
+<section class="block"><div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:22px" id="plg">
+<form class="panel" data-form="trip" novalidate>
+ <h2 style="font-size:1.4rem">${e ? 'Update your trip' : 'Create a new trip'}</h2><p class="sub">Fields marked * are required.</p>
+ <div class="grid g2">
+  <div class="field"><label for="tn">Trip name *</label><input id="tn" name="name" value="${v('name')}" placeholder="Summer in Bali"><div class="err" data-e="name"></div></div>
+  <div class="field"><label for="tc">Preferred currency</label><select id="tc" name="ccy">${Object.keys(RATES).map(c => `<option ${(e ? e.ccy : S.ccy) === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+  <div class="field"><label for="tf">Starting location *</label><input id="tf" name="from" value="${v('from')}" placeholder="Your city"><div class="err" data-e="from"></div></div>
+  <div class="field"><label for="tt">Final destination *</label><input id="tt" name="to" list="dl2" value="${v('to')}" placeholder="Choose or type"><datalist id="dl2">${D.map(d => `<option value="${d.name}">`).join('')}</datalist><div class="err" data-e="to"></div></div>
+ </div>
+ <div class="field" style="margin-top:12px"><label for="ts">Intermediate destinations (one per line)</label><textarea id="ts" name="stops" rows="3" placeholder="Singapore&#10;Ubud">${e ? esc((e.stops || []).join('\n')) : esc((dr.stops || []).join('\n'))}</textarea></div>
+ <div class="grid g2" style="margin-top:12px">
+  <div class="field"><label for="td">Departure date &amp; time *</label><input id="td" type="datetime-local" name="depart" value="${e ? e.depart : (dr.depart || def)}"><div class="err" data-e="depart"></div></div>
+  <div class="field"><label for="tr">Return date &amp; time *</label><input id="tr" type="datetime-local" name="ret" value="${e ? e.ret : (dr.ret || def2)}"><div class="err" data-e="ret"></div></div>
+  <div class="field"><label for="ta">Adults *</label><input id="ta" type="number" name="adults" min="1" max="20" value="${e ? e.adults : (dr.adults || 2)}"><div class="err" data-e="adults"></div></div>
+  <div class="field"><label for="tch">Children</label><input id="tch" type="number" name="children" min="0" max="20" value="${e ? e.children : (dr.children || 0)}"></div>
+  <div class="field"><label for="tp">Preferred transport</label><select id="tp" name="transport">${sel('transport', ['Flight', 'Train', 'Car / road trip', 'Bus', 'Mixed'], 'Flight')}</select></div>
+  <div class="field"><label for="tac">Accommodation</label><select id="tac" name="accom">${sel('accom', ['Hotel', 'Resort', 'Hostel', 'Villa / homestay', 'No preference'], 'Hotel')}</select></div>
+  <div class="field"><label for="tfo">Food preference</label><select id="tfo" name="food">${sel('food', ['No preference', 'Vegetarian', 'Vegan', 'Halal', 'Local cuisine'], 'No preference')}</select></div>
+  <div class="field"><label for="ti">Activity interests</label><input id="ti" name="interests" value="${v('interests')}" placeholder="Beaches, trekking, museums"></div>
+  <div class="field"><label for="tb">Total budget *</label><input id="tb" type="number" name="budget" min="1" step="any" value="${e ? Math.round(e.budgetUSD * (RATES[e.ccy] || 1)) : (dr.budget || 2000)}"><div class="err" data-e="budget"></div></div>
+  <div class="field"><label for="th">Home address / meeting point (for return) *</label><input id="th" name="home" value="${v('home')}" placeholder="Where you return to"><div class="err" data-e="home"></div></div>
+ </div>
+ <div class="row" style="margin-top:20px"><button class="btn" type="submit">${e ? '💾 Save changes' : '✨ Create trip'}</button>${e ? '<button class="btn ghost" type="button" data-act="canceledit">Cancel</button>' : ''}</div>
+</form>
+<aside><div class="panel"><h3>Your trips</h3>${S.trips.length ? S.trips.map(t => `<div class="row sp" style="padding:10px 0;border-bottom:1px solid var(--line)"><div><b>${esc(t.name)}</b><div class="meta">${esc(t.from)} → ${esc(t.to)}</div></div><div class="row"><button class="btn sm ghost" data-act="tripedit" data-id="${t.id}">Edit</button><button class="btn sm ghost" data-act="tripdup" data-id="${t.id}">Copy</button></div></div>`).join('') : '<p class="meta">No trips yet. Create your first one!</p>'}</div>
+<div class="alert info">💡 Saved only in this browser (LocalStorage). Return-home planning is part of every trip.</div></aside></div></div></section>
+<style>@media(max-width:860px){#plg{grid-template-columns:1fr!important}}</style>`;
+};
+
+/* ----- route ----- */
+PAGES.route = () => {
+  const t = curTrip();
+  return `${pageHead('Travel Route &amp; Time Calculator', 'Distance, duration, arrival times and navigation links for multi-stop journeys.')}
+<section class="block"><div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:22px" id="rtg">
+<form class="panel" data-form="route" novalidate>
+ <div class="field"><label for="rf">Start *</label><input id="rf" name="from" value="${esc(t ? t.from : '')}" placeholder="e.g. Paris"></div>
+ <div class="field" style="margin-top:10px"><label for="rs">Stops (one per line)</label><textarea id="rs" name="stops" rows="3" placeholder="Optional stops">${esc(t ? (t.stops || []).join('\n') : '')}</textarea></div>
+ <div class="field" style="margin-top:10px"><label for="rt">Destination *</label><input id="rt" name="to" value="${esc(t ? t.to : '')}" placeholder="e.g. Interlaken" list="dl3"><datalist id="dl3">${D.map(d => `<option value="${d.name}">`).join('')}</datalist></div>
+ <div class="grid g2" style="margin-top:10px">
+  <div class="field"><label for="rm">Mode</label><select id="rm" name="mode"><option value="driving">🚗 Driving</option><option value="walking">🚶 Walking</option><option value="cycling">🚴 Cycling</option><option value="transit">🚆 Public transport</option></select></div>
+  <div class="field"><label for="rd">Departure time</label><input id="rd" type="datetime-local" name="dep" value="${t ? t.depart : ''}"></div>
+  <div class="field"><label for="rst">Minutes at each stop</label><input id="rst" type="number" name="stopmin" value="45" min="0"></div>
+  <div class="field"><label for="rbf">Buffer per leg (min)</label><input id="rbf" type="number" name="buf" value="10" min="0"></div></div>
+ <div class="err" id="rerr"></div><button class="btn" style="margin-top:14px;width:100%" type="submit">🧭 Calculate route</button></form>
+<div id="rout">${empty('🗺️', 'No route yet', 'Enter your places and tap Calculate. Real results appear when the routing service is reachable; otherwise you’ll see a clearly-labelled estimate.')}</div></div></div></section>
+<style>@media(max-width:860px){#rtg{grid-template-columns:1fr!important}}</style>`;
+};
+function renderRoute(res, o) {
+  const dep = o.dep ? new Date(o.dep) : null; let clock = dep ? dep.getTime() : null; const rows = [];
+  res.main.legs.forEach((l, i) => {
+    const last = i === res.main.legs.length - 1; const s = clock; if (clock) clock += (l.min + o.buf) * 6e4;
+    rows.push(`<tr><td>${esc(res.pts[i].name)} → ${esc(res.pts[i + 1].name)}</td><td>${l.km.toFixed(1)} km</td><td>${hhmm(l.min)}</td><td>${s ? new Date(s).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td><td>${clock ? new Date(clock).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td></tr>`);
+    if (!last && clock) clock += o.stopmin * 6e4;
+  });
+  const total = res.main.min + o.buf * res.main.legs.length + o.stopmin * Math.max(0, res.main.legs.length - 1);
+  const map = navigator.onLine && !isSlowConnection()
+    ? `<iframe class="map" title="Map of route area" loading="lazy" src="${osmEmbed(res.pts)}"></iframe><p class="meta">Map © OpenStreetMap contributors. Location lookups via ${esc([...new Set(res.pts.map(p => p.src))].join(', '))}.</p>`
+    : `<div class="alert info">Map preview is paused to save data. Open the map link when you have a stronger connection.</div>`;
+  return `<div class="panel"><div class="row sp"><h3>Route result</h3><span class="tag ${res.live ? 'ok' : 'warn'}">${res.live ? 'LIVE API RESULT' : 'ESTIMATE ONLY'}</span></div>
+  <div class="alert ${res.live ? 'ok' : 'warn'}">${esc(res.note)}</div>
+  <div class="grid g3"><div class="stat"><b>${res.main.km.toFixed(1)} km</b><span>Total distance</span></div><div class="stat"><b>${hhmm(res.main.min)}</b><span>Travel time</span></div><div class="stat"><b>${hhmm(total)}</b><span>Incl. stops &amp; buffers</span></div></div>
+  <div class="scroll" style="margin-top:14px"><table class="tbl"><thead><tr><th>Leg</th><th>Distance</th><th>Drive</th><th>Depart</th><th>Arrive</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  ${res.alts.length ? `<p class="meta" style="margin-top:10px"><b>Alternatives:</b> ${res.alts.map((a, i) => `#${i + 2}: ${a.km.toFixed(1)} km / ${hhmm(a.min)}`).join(' · ')}</p>` : ''}
+  <div class="row" style="margin:14px 0"><a class="btn sm sec" target="_blank" rel="noopener" href="${gmapsLink(res.pts, res.mode)}">Open in Google Maps ↗</a><button class="btn sm ghost" data-act="saveroute" data-min="${Math.round(total)}">Save duration to current trip</button></div>
+  ${map}</div>`;
+}
+
+/* ----- itinerary ----- */
+PAGES.itinerary = () => {
+  const t = curTrip(); if (!t) return pageHead('Itinerary', '') + `<div class="wrap" style="padding:40px 20px">${empty('🗓️', 'Create a trip first', 'Your day-by-day timeline lives inside a trip.', '<a class="btn" href="#/planner">Create a trip</a>')}</div>`;
+  const w = itinWarnings(t);
+  return `${pageHead('Itinerary Manager', esc(t.name) + ' · ' + esc(t.from) + ' → ' + esc(t.to))}
+<section class="block"><div class="wrap">${tripPicker(t)}
+${w.length ? `<div class="alert warn"><b>⚠️ ${w.length} schedule warning${w.length > 1 ? 's' : ''}</b><ul style="margin:6px 0 0 20px">${w.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '<div class="alert ok">✅ No schedule conflicts detected.</div>'}
+${tripDays(t).map((day, di) => { const items = (t.itin && t.itin[day]) || [];
+    return `<div class="day"><div class="row sp"><h3>Day ${di + 1} · ${new Date(day + 'T00:00').toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}</h3><button class="btn sm" data-act="itemadd" data-day="${day}">+ Add activity</button></div>
+    ${items.length ? `<div class="tl">${items.map((it, i) => { const nx = items[i + 1]; const gap = nx ? toMin(nx.start) - toMin(it.end) : null;
+      return `<div class="ti ${it.done ? 'done' : ''}"><div class="row sp"><b>${esc(it.name)}</b><span class="meta">${it.start}–${it.end}</span></div><div class="meta">📍 ${esc(it.loc || '—')} · ${money(it.cost || 0)}${it.ref ? ' · Ref ' + esc(it.ref) : ''}${it.travel ? ' · 🚗 ~' + it.travel + ' min to next' : ''}</div>${it.notes ? `<div class="meta">📝 ${esc(it.notes)}</div>` : ''}
+      <div class="row" style="margin-top:8px"><button class="btn sm ghost" data-act="itemdone" data-day="${day}" data-i="${i}">${it.done ? '↩ Undo' : '✔ Done'}</button><button class="btn sm ghost" data-act="itemedit" data-day="${day}" data-i="${i}">Edit</button><button class="btn sm ghost" data-act="itemmove" data-day="${day}" data-i="${i}" data-d="-1" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>↑</button><button class="btn sm ghost" data-act="itemmove" data-day="${day}" data-i="${i}" data-d="1" aria-label="Move down" ${i === items.length - 1 ? 'disabled' : ''}>↓</button><button class="btn sm danger" data-act="itemdel" data-day="${day}" data-i="${i}">Delete</button></div></div>${gap !== null ? `<p class="meta" style="margin:-4px 0 10px 4px">${gap >= 0 ? '⏱ Gap: ' + gap + ' min' : '⚠ Overlap: ' + (-gap) + ' min'}</p>` : ''}`; }).join('')}</div>
+    <button class="btn sm ghost" data-act="itemsort" data-day="${day}">Sort by time</button>` : '<p class="meta" style="margin-top:8px">Nothing planned yet.</p>'}</div>`; }).join('')}</div></section>`;
+};
+const tripPicker = t => S.trips.length > 1 ? `<div class="field" style="max-width:320px;margin-bottom:16px"><label for="tpk">Active trip</label><select id="tpk" data-act-change="picktrip">${S.trips.map(x => `<option value="${x.id}" ${x.id === t.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>` : '';
+
+/* ----- cart + checkout ----- */
+const cartTotals = items => { const sub = items.reduce((s, i) => s + i.total, 0); return { sub, all: sub }; };
+PAGES.cart = () => {
+  const c = S.cart; const tt = cartTotals(c); const trip = curTrip();
+  if (S.checkoutResult) return checkoutResult();
+  if (!c.length) return pageHead('Booking request', 'Prepare a request to save on this device.') + `<div class="wrap" style="padding:40px 20px">${empty('🛒', 'Your request cart is empty', 'Add sample hotels, transport, tickets or restaurant requests.', '<a class="btn" href="#/hotels">Browse hotels</a>')}</div>`;
+  return `${pageHead('Booking request', 'Review your selections and save a request locally.')}
+<section class="block"><div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px" id="ckg"><div>
+${c.map(i => `<div class="panel" style="margin-bottom:12px"><div class="row sp"><div><span class="tag">${esc(i.label)}</span><h3 style="margin-top:6px">${esc(i.name)}</h3><p class="meta">${esc(i.detail)}</p><p class="meta">📅 ${esc(i.date)} · Cancellation details are sample information.</p></div><div style="text-align:right"><div class="price">${i.total ? money(i.total) : 'Price unavailable'}</div><button class="btn sm danger" data-act="cartdel" data-id="${i.id}" style="margin-top:8px">Remove</button></div></div></div>`).join('')}
+</div><aside><div class="panel" style="position:sticky;top:84px"><h3>Request summary</h3>
+<div class="row sp" style="margin-top:10px"><span>Estimated total</span><b>${money(tt.sub)}</b></div><div class="hr"></div>
+<p class="meta">Estimate in ${S.ccy}, using sample listing prices. No taxes or fees are charged.</p>
+<form data-form="checkout" novalidate style="margin-top:14px">
+ <div class="field"><label for="ct">Add to trip</label><select id="ct" name="trip">${S.trips.map(t => `<option value="${t.id}" ${trip && t.id === trip.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}<option value="">— No trip —</option></select></div>
+ <h3 style="margin:14px 0 6px;font-size:1rem">Contact details</h3>
+ <div class="field"><label for="cn">Full name *</label><input id="cn" name="name" autocomplete="name"><div class="err" data-e="name"></div></div>
+ <div class="field"><label for="ce">Email *</label><input id="ce" name="email" type="email" autocomplete="email"><div class="err" data-e="email"></div></div>
+ <div class="field"><label for="cp">Phone *</label><input id="cp" name="phone" type="tel" autocomplete="tel"><div class="err" data-e="phone"></div></div>
+ <div class="alert info" style="font-size:.82rem">This request is saved only in this browser. It is not sent to a provider, is not a reservation, and does not involve payment.</div>
+ <label style="font-weight:500;display:flex;gap:8px;align-items:flex-start;margin-top:10px"><input type="checkbox" name="localOnly" style="width:auto;margin-top:4px"> I understand this is a local request only.</label><div class="err" data-e="localOnly"></div>
+ <button class="btn" style="width:100%;margin-top:14px" type="submit">Save request on this device</button></form></div></aside></div></div></section>
+<style>@media(max-width:860px){#ckg{grid-template-columns:1fr!important}}</style>`;
+};
+function checkoutResult() {
+  const r = S.checkoutResult;
+  if (r.requestRef) {
+    const body = `<div class="alert ok"><b>Request saved on this device.</b> This is not a confirmed reservation and was not sent to any provider. No payment was made.</div>
+    <div class="panel"><h3>Local request reference</h3><p><b>${esc(r.requestRef)}</b></p><p class="meta">Saved ${new Date(r.t).toLocaleString()}</p><table class="tbl" style="margin-top:10px"><tbody>${r.items.map(i => `<tr><td>${esc(i.name)}<div class="meta">${esc(i.date)} · ${esc(i.detail)}</div></td><td style="text-align:right">${i.total ? money(i.total) : 'No price'}</td></tr>`).join('')}</tbody></table><div class="row sp" style="margin-top:12px"><span class="total">Estimated total</span><span class="total">${money(r.estimatedTotal)}</span></div></div>`;
+    return `${pageHead('Request saved', 'Your request is stored in this browser only.')}<section class="block"><div class="wrap" style="max-width:760px">${body}<div class="row" style="margin-top:16px"><a class="btn" href="#/bookings" data-act="clearres">View saved requests</a><a class="btn ghost" href="#/home" data-act="clearres">Back to travel</a></div></div></section>`;
+  }
+  const body = r.ok ? `<div class="alert ok"><b>✅ DEMONSTRATION booking complete.</b> No real reservation was made and no money moved.</div>
+  <div class="panel"><h3>Receipt <span class="tag demo">DEMO</span></h3><p class="meta">Transaction ref: <b>${r.tx}</b> · ${new Date(r.t).toLocaleString()}</p>
+  <table class="tbl" style="margin-top:10px"><tbody>${r.items.map(i => `<tr><td>${esc(i.name)}<div class="meta">${esc(i.date)}</div></td><td>${i.ok ? '<span class="tag ok">Demo-confirmed</span>' : '<span class="tag bad">Supplier failed — kept in cart</span>'}</td><td style="text-align:right">${money(i.total)}</td></tr>`).join('')}</tbody></table>
+  <div class="row sp" style="margin-top:12px"><span class="total">Charged (demo)</span><span class="total">${money(r.paid)}</span></div></div>`
+    : `<div class="alert bad"><b>❌ Payment failed (simulated).</b> Nothing was booked or charged. Your cart is unchanged — you can retry.</div>`;
+  return `${pageHead(r.ok ? 'Booking complete' : 'Payment failed', 'Demo checkout')}<section class="block"><div class="wrap" style="max-width:760px">${body}<div class="row" style="margin-top:16px">${r.ok ? '<a class="btn" href="#/bookings" data-act="clearres">View bookings</a><a class="btn ghost" href="#/budget" data-act="clearres">Open budget</a>' : '<button class="btn" data-act="clearres">Try again</button>'}</div></div></section>`;
+}
+
+/* ----- bookings ----- */
+PAGES.bookings = () => `${pageHead('Booking requests', 'Requests saved on this device, not confirmed reservations.')}
+<section class="block"><div class="wrap"><div class="alert info">Saved requests stay in this browser. They are not sent to providers, do not reserve availability, and do not include payment.</div>
+<h2 style="margin:18px 0 10px">Saved requests and older records</h2>${S.bookings.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Ref</th><th>Service</th><th>Date</th><th>Estimate</th><th>Status</th><th></th></tr></thead><tbody>${S.bookings.map(b => `<tr><td>${esc(b.ref)}</td><td><b>${esc(b.name)}</b><div class="meta">${esc(b.label)} · ${esc(b.detail)}</div></td><td>${esc(b.date)}</td><td>${money(b.total)}</td><td><span class="tag ${b.status === 'Demo-confirmed' ? 'ok' : b.status.includes('Cancel') ? 'bad' : 'warn'}">${esc(b.status)}</span>${b.refund ? `<div class="meta">Refund: ${esc(b.refund)}</div>` : ''}</td><td>${b.status === 'Demo-confirmed' ? `<button class="btn sm danger" data-act="cancelbk" data-id="${b.id}">Request cancellation</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : empty('📒', 'No saved requests', 'Choose a sample listing and save a request on this device.', '<a class="btn" href="#/hotels">Browse listings</a>')}
+<h2 style="margin:28px 0 10px">Older simulated payment records</h2>${S.payments.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Transaction</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>${S.payments.map(p => `<tr><td>${esc(p.tx)}</td><td>${new Date(p.t).toLocaleString()}</td><td>${money(p.amt)}</td><td><span class="tag ${p.status.includes('Refund') ? 'warn' : 'ok'}">${esc(p.status)}</span></td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No payment records.</p>'}</div></section>`;
+
+/* ----- my trips ----- */
+PAGES.mytrips = () => {
+  const g = { upcoming: [], progress: [], completed: [], cancelled: [] }; S.trips.forEach(t => g[tripStatus(t)].push(t));
+  const sec = (k, title) => `<h2 style="font-size:1.3rem;margin:24px 0 10px">${title} <span class="tag">${g[k].length}</span></h2>${g[k].length ? `<div class="grid g3">${g[k].map(tripCard).join('')}</div>` : '<p class="meta">None.</p>'}`;
+  const unread = S.notes.filter(n => !n.read).length;
+  return `${pageHead('My Trips', 'Everything you’re planning, travelling and remembering.')}
+<section class="block"><div class="wrap">
+<div class="grid g4"><div class="stat"><b>${S.trips.length}</b><span>Total trips</span></div><div class="stat"><b>${S.bookings.filter(b => b.status === 'Request saved locally').length}</b><span>Saved requests</span></div><div class="stat"><b>${S.favs.length}</b><span>Saved destinations</span></div><div class="stat"><b>${unread}</b><span>Unread notifications</span></div></div>
+<div class="row" style="margin-top:16px"><a class="btn" href="#/planner">+ New trip</a><a class="btn ghost" href="#/itinerary">Itinerary</a><a class="btn ghost" href="#/budget">Budget</a><a class="btn ghost" href="#/return">Return home</a><a class="btn ghost" href="#/bookings">Booking requests</a></div>
+${S.trips.length ? sec('progress', '🟢 In progress') + sec('upcoming', '🗓️ Upcoming') + sec('completed', '✅ Completed') + sec('cancelled', '🚫 Cancelled') : '<div style="margin-top:24px">' + empty('🧳', 'No trips yet', 'Start planning your first adventure.', '<a class="btn" href="#/planner">Create a trip</a>') + '</div>'}
+<h2 style="font-size:1.3rem;margin:28px 0 10px">❤️ Saved destinations</h2>${S.favs.length ? `<div class="grid g3">${S.favs.map(id => D.find(d => d.id === id)).filter(Boolean).map(destCard).join('')}</div>` : '<p class="meta">Tap the heart on any destination to save it.</p>'}
+</div></section>`;
+};
+function tripCard(t) {
+  const st = tripStatus(t); const ck = (t.checklist || []).filter(c => c.done).length; const days = tripDays(t).length;
+  return `<article class="card"><div class="media" style="height:90px;${bg((D.find(d => d.name.toLowerCase() === t.to.toLowerCase()) || { hue: 200 }).hue)}"><span aria-hidden="true">${(D.find(d => d.name.toLowerCase() === t.to.toLowerCase()) || { emoji: '🧳' }).emoji}</span></div><div class="body"><div class="row sp"><h3>${esc(t.name)}</h3><span class="tag ${st === 'cancelled' ? 'bad' : st === 'completed' ? 'ok' : ''}">${st}</span></div>
+  <p class="meta">${esc(t.from)} → ${esc(t.to)}</p><p class="meta">${fmtDT(t.depart)} · ${days} day${days > 1 ? 's' : ''}</p>
+  <p class="meta">Budget ${money(t.budgetUSD)} · Spent ${money(spent(t))} · Checklist ${ck}/${(t.checklist || []).length}</p>
+  <div class="actions" style="flex-wrap:wrap"><button class="btn sm sec" data-act="tripopen" data-id="${t.id}">Open</button><button class="btn sm ghost" data-act="tripedit" data-id="${t.id}">Edit</button>${st === 'upcoming' || st === 'progress' ? `<button class="btn sm danger" data-act="tripcancel" data-id="${t.id}">Cancel</button>` : ''}<button class="btn sm danger" data-act="tripdel" data-id="${t.id}">Delete</button></div></div></article>`;
+}
+
+/* ----- budget ----- */
+PAGES.budget = () => {
+  const t = curTrip(); if (!t) return pageHead('Budget & Expenses', '') + `<div class="wrap" style="padding:40px 20px">${empty('💰', 'Create a trip first', 'Budgets belong to a trip.', '<a class="btn" href="#/planner">Create a trip</a>')}</div>`;
+  const act = spent(t), ref = refunded(t), rem = t.budgetUSD - act + ref, trav = (t.adults + t.children) || 1; const pct = Math.min(100, act / t.budgetUSD * 100);
+  const mx = Math.max(1, ...CATS.map(c => Math.max(planFor(t, c), spent(t, c))));
+  const exps = S.expenses.filter(e => e.trip === t.id);
+  return `${pageHead('Budget &amp; Expense Manager', esc(t.name))}
+<section class="block"><div class="wrap">${tripPicker(t)}
+<div class="grid g4"><div class="stat"><b>${money(t.budgetUSD)}</b><span>Planned budget</span></div><div class="stat"><b>${money(act)}</b><span>Actual spend</span></div><div class="stat"><b style="color:${rem < 0 ? 'var(--bad)' : 'var(--ok)'}">${money(rem)}</b><span>Remaining (incl. refunds ${money(ref)})</span></div><div class="stat"><b>${money(act / trav)}</b><span>Spend per traveller (${trav})</span></div></div>
+<div class="panel" style="margin-top:16px"><div class="row sp"><b>Overall usage</b><span class="meta">${pct.toFixed(0)}%</span></div><div class="bars"><div class="track" style="height:18px;margin-top:6px"><div class="act ${pct >= 100 ? 'over' : ''}" style="width:${pct}%"></div></div></div>${pct >= 100 ? '<div class="alert bad">You have reached or exceeded your budget.</div>' : pct > 80 ? '<div class="alert warn">You have used over 80% of your budget.</div>' : ''}</div>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-top:16px">
+<div class="panel"><h3>Planned vs actual by category</h3><div class="bars" style="margin-top:8px"><p class="meta">Blue = planned · Orange = actual</p>${CATS.map(c => { const p = planFor(t, c), a = spent(t, c); return `<div class="bl"><span>${c}</span><div class="track"><div class="plan" style="width:${p / mx * 100}%"></div><div class="act ${a > p ? 'over' : ''}" style="width:${a / mx * 100}%"></div></div><span style="text-align:right">${money(a)}<br><small class="meta">/ ${money(p)}</small></span></div>`; }).join('')}</div></div>
+<div class="panel"><h3>Add expense</h3><form data-form="expense" novalidate><div class="grid g2"><div class="field"><label for="ed">Description *</label><input id="ed" name="desc"></div><div class="field"><label for="ec">Category</label><select id="ec" name="cat">${CATS.map(c => `<option>${c}</option>`).join('')}</select></div><div class="field"><label for="ea">Amount *</label><input id="ea" name="amt" type="number" step="any" min="0"></div><div class="field"><label for="ey">Currency</label><select id="ey" name="ccy">${Object.keys(RATES).map(c => `<option ${c === S.ccy ? 'selected' : ''}>${c}</option>`).join('')}</select></div></div><label style="font-weight:500;display:flex;gap:8px;align-items:center;margin:10px 0"><input type="checkbox" name="refund" style="width:auto"> This is a refund</label><div class="err" id="eerr"></div><button class="btn" type="submit">Add</button><p class="meta" style="margin-top:8px">Conversions use ${RATE_STAMP}.</p></form></div></div>
+<div class="panel" style="margin-top:16px"><h3>Plan categories</h3><form data-form="plan" novalidate><div class="grid g4" style="margin-top:8px">${CATS.map(c => `<div class="field"><label>${c} (${S.ccy})</label><input name="${c}" type="number" min="0" step="any" value="${Math.round(planFor(t, c) * RATES[S.ccy])}"></div>`).join('')}</div><button class="btn sm sec" style="margin-top:12px">Save planned amounts</button></form></div>
+<h3 style="margin:22px 0 8px">Transactions</h3>${exps.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Original</th><th>In ${S.ccy}</th><th></th></tr></thead><tbody>${exps.map(e => `<tr><td>${e.date}</td><td>${esc(e.desc)}${e.refund ? ' <span class="tag warn">refund</span>' : ''}${e.ref ? `<div class="meta">${e.ref}</div>` : ''}</td><td>${esc(e.cat)}</td><td>${e.orig.toFixed(2)} ${e.ccy}<div class="meta">rate ${e.rate} @ ${e.rateAt.slice(0, 10)}</div></td><td>${money(e.usd)}</td><td><button class="btn sm danger" data-act="expdel" data-id="${e.id}">✕</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No expenses yet.</p>'}</div></section>`;
+};
+
+/* ----- return home ----- */
+PAGES.return = () => {
+  const t = curTrip(); if (!t) return pageHead('Return Home', '') + `<div class="wrap" style="padding:40px 20px">${empty('🏠', 'Create a trip first', '', '<a class="btn" href="#/planner">Create a trip</a>')}</div>`;
+  t.checklist = t.checklist || defaultChecklist(); const retDay = t.ret.slice(0, 10); const items = ((t.itin || {})[retDay] || []); const last = items.length ? items.reduce((m, i) => toMin(i.end) > toMin(m.end) ? i : m) : null;
+  const buf = t.buffer ?? 180; const need = (t.returnMin || 0) + buf; const avail = last ? toMin(t.ret.slice(11, 16)) - toMin(last.end) : null;
+  const st = tripStatus(t);
+  return `${pageHead('Return-Home Planner', esc(t.name) + ' · back to ' + esc(t.home))}
+<section class="block"><div class="wrap">${tripPicker(t)}
+<div class="grid g3"><div class="stat"><b>${fmtDT(t.ret)}</b><span>Return departure</span></div><div class="stat"><b>${t.returnMin ? hhmm(t.returnMin) : 'Not set'}</b><span>Return travel time</span></div><div class="stat"><b>${hhmm(buf)}</b><span>Buffer before connection</span></div></div>
+${last && t.returnMin && avail < need ? `<div class="alert bad"><b>⚠️ Not enough time!</b> Your last activity ends at ${last.end} on return day, leaving ${hhmm(Math.max(avail, 0))} — you need about ${hhmm(need)} (travel + buffer).</div>` : last && t.returnMin ? '<div class="alert ok">✅ Your return-day plan leaves enough time to reach your departure point.</div>' : '<div class="alert info">Calculate the return route and add return-day activities to enable time checks.</div>'}
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-top:16px">
+<div class="panel"><h3>Return route</h3><p class="meta">From ${esc(t.to)} to ${esc(t.home)}</p><form data-form="retroute" style="margin-top:10px"><div class="grid g2"><div class="field"><label for="rm2">Mode</label><select id="rm2" name="mode"><option value="driving">Driving</option><option value="walking">Walking</option><option value="cycling">Cycling</option><option value="transit">Public transport</option></select></div><div class="field"><label for="rb">Buffer (minutes)</label><input id="rb" name="buf" type="number" min="0" value="${buf}"></div></div><div class="err" id="rerr"></div><button class="btn" style="margin-top:12px">Calculate return route</button></form><div id="rout" style="margin-top:12px"></div><p class="meta" style="margin-top:10px">Need a ride? <a href="#/transport">Book return transport →</a></p></div>
+<div class="panel"><h3>Checkout &amp; document checklist</h3><div style="margin-top:8px">${t.checklist.map((c, i) => `<label style="display:flex;gap:10px;align-items:center;font-weight:500;padding:6px 0"><input type="checkbox" style="width:auto" data-act-change="check" data-i="${i}" ${c.done ? 'checked' : ''}> ${esc(c.t)}</label>`).join('')}</div></div></div>
+<div class="panel" style="margin-top:16px"><h3>Final expense summary</h3><p>Spent <b>${money(spent(t))}</b> of ${money(t.budgetUSD)} · Refunds ${money(refunded(t))} · Remaining <b>${money(t.budgetUSD - spent(t) + refunded(t))}</b></p>
+${st === 'completed' && t.status !== 'cancelled' ? (t.review ? `<div class="alert ok">Review saved: ${'★'.repeat(t.review.stars)} — ${esc(t.review.text)}</div>` : `<form data-form="review" style="margin-top:12px"><div class="grid g2"><div class="field"><label for="rvs">Rating</label><select id="rvs" name="stars"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div><div class="field"><label for="rvt">How was your trip?</label><input id="rvt" name="text"></div></div><button class="btn sm" style="margin-top:10px">Submit review</button></form>`) : `<button class="btn" style="margin-top:12px" data-act="complete" data-id="${t.id}">🏁 Mark trip as completed</button>`}</div></div></section>`;
+};
+const defaultChecklist = () => ['Passport / ID packed', 'Hotel checkout done', 'Return tickets downloaded', 'Local currency exchanged back / spent', 'Transport to departure point confirmed', 'Souvenirs & customs limits checked', 'Phone, chargers & adapters packed'].map(t => ({ t, done: false }));
+
+/* ----- provider ----- */
+const PTYPES = ['Hotel owner', 'Jeep / transport operator', 'Restaurant owner', 'Tour guide', 'Attraction / ticket operator'];
+PAGES.provider = () => {
+  if (S.role !== 'provider') return `${pageHead('Provider Portal', 'For hotels, operators, restaurants, guides and attraction businesses.')}<section class="block"><div class="wrap" style="max-width:640px"><div class="alert warn">🔐 Real provider access needs secure authentication and server-side data isolation. This is a <b>mock login</b> for demonstration.</div><div class="panel"><h3>Demo provider sign-in</h3><form data-form="provlogin"><div class="field"><label for="pr">Provider role</label><select id="pr" name="type">${PTYPES.map(p => `<option>${p}</option>`).join('')}</select></div><div class="field" style="margin-top:10px"><label for="pb">Business name</label><input id="pb" name="biz" value="Demo Business"></div><button class="btn" style="margin-top:14px">Enter dashboard</button></form></div></div></section>`;
+  const mine = S.listings; const sales = S.bookings.filter(b => b.status === 'Demo-confirmed').reduce((s, b) => s + b.total, 0); const month = new Date().toISOString().slice(0, 7);
+  const days = Array.from({ length: 30 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d.toISOString().slice(0, 10); });
+  return `${pageHead('Provider Dashboard', esc(S.provider?.biz || 'Demo Business') + ' · ' + esc(S.provider?.type || ''))}
+<section class="block"><div class="wrap"><div class="row sp"><span class="tag warn">Verification: pending (demo)</span><button class="btn sm ghost" data-act="logout">Sign out</button></div>
+<div class="grid g4" style="margin-top:14px"><div class="stat"><b>${mine.length}</b><span>Listings</span></div><div class="stat"><b>${S.bookings.length}</b><span>Booking requests</span></div><div class="stat"><b>${money(sales)}</b><span>Demo sales</span></div><div class="stat"><b>${money(sales * .88)}</b><span>Payout status: scheduled (demo)</span></div></div>
+<div class="row sp" style="margin:24px 0 10px"><h2 style="font-size:1.3rem">Listings</h2><button class="btn sm" data-act="listadd">+ New listing</button></div>
+${mine.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Name</th><th>Price</th><th>Capacity</th><th>Description</th><th></th></tr></thead><tbody>${mine.map(l => `<tr><td><b>${esc(l.name)}</b></td><td>${money(l.price)}</td><td>${l.cap}</td><td>${esc(l.desc)}</td><td><div class="row"><button class="btn sm ghost" data-act="listedit" data-id="${l.id}">Edit</button><button class="btn sm danger" data-act="listdel" data-id="${l.id}">Delete</button></div></td></tr>`).join('')}</tbody></table></div>` : empty('🏷️', 'No listings yet', 'Create your first listing.')}
+<h2 style="font-size:1.3rem;margin:26px 0 6px">Availability calendar (next 30 days)</h2><p class="meta">Tap a date to block / unblock it.</p><div class="row" style="margin-top:8px">${days.map(d => `<button class="btn sm ${S.blocked[d] ? 'danger' : 'ghost'}" data-act="block" data-d="${d}" aria-pressed="${!!S.blocked[d]}">${d.slice(5)}${S.blocked[d] ? ' ✕' : ''}</button>`).join('')}</div>
+<h2 style="font-size:1.3rem;margin:26px 0 10px">Customer bookings</h2>${S.bookings.length ? `<div class="scroll"><table class="tbl"><thead><tr><th>Ref</th><th>Service</th><th>Status</th></tr></thead><tbody>${S.bookings.slice(0, 8).map(b => `<tr><td>${b.ref}</td><td>${esc(b.name)}</td><td>${b.status}</td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No bookings yet.</p>'}
+<h2 style="font-size:1.3rem;margin:26px 0 10px">Reviews <span class="tag demo">DEMO</span></h2><div class="panel"><span class="stars">★★★★★</span> “Great host!” — sample guest</div></div></section>`;
+};
+
+/* ----- admin ----- */
+PAGES.admin = () => {
+  if (S.role !== 'admin') return `${pageHead('Admin Dashboard', 'Restricted area')}<section class="block"><div class="wrap" style="max-width:640px"><div class="alert warn">🔐 Hiding this link is <b>not</b> security. Production admin tools require server-side authentication &amp; authorisation. This demo toggle exists only so you can preview the interface.</div><button class="btn" data-act="adminlogin">Preview admin UI (demo)</button></div></section>`;
+  const cnt = k => S.trips.filter(t => tripStatus(t) === k).length;
+  return `${pageHead('Admin Dashboard', 'Demo data from this browser only')}<section class="block"><div class="wrap"><div class="row sp"><span class="tag demo">DEMO ADMIN</span><button class="btn sm ghost" data-act="logout">Exit admin</button></div>
+<div class="grid g4" style="margin-top:14px"><div class="stat"><b>1</b><span>Users (this browser)</span></div><div class="stat"><b>${S.trips.length}</b><span>Total trips</span></div><div class="stat"><b>${S.bookings.length}</b><span>Total bookings</span></div><div class="stat"><b>${cnt('progress') + cnt('upcoming')} / ${cnt('completed')}</b><span>Active / completed trips</span></div></div>
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Provider verification</h2><div class="scroll"><table class="tbl"><thead><tr><th>Business</th><th>Type</th><th>Status</th><th></th></tr></thead><tbody>${S.providers.map(p => `<tr><td>${esc(p.name)}</td><td>${p.type}</td><td><span class="tag ${p.status === 'verified' ? 'ok' : p.status === 'rejected' ? 'bad' : 'warn'}">${p.status}</span></td><td><div class="row">${p.status !== 'verified' ? `<button class="btn sm" data-act="prov" data-v="verified" data-id="${p.id}">Approve</button>` : ''}${p.status !== 'rejected' ? `<button class="btn sm danger" data-act="prov" data-v="rejected" data-id="${p.id}">Reject</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Cancellations &amp; refunds</h2><p>${S.bookings.filter(b => b.status.includes('Cancel')).length} cancelled · ${S.payments.filter(p => p.status.includes('Refund')).length} refunds (demo)</p>
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Reported reviews</h2>${S.reported.map(r => `<div class="panel row sp" style="margin-bottom:8px"><span>${esc(r.text)}</span>${r.open ? `<div class="row"><button class="btn sm" data-act="rep" data-v="keep" data-id="${r.id}">Keep</button><button class="btn sm danger" data-act="rep" data-v="remove" data-id="${r.id}">Remove</button></div>` : '<span class="tag ok">Resolved</span>'}</div>`).join('')}
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Support tickets</h2>${S.tickets.length ? `<div class="scroll"><table class="tbl"><tbody>${S.tickets.map(t => `<tr><td>${esc(t.subject)}</td><td>${esc(t.email)}</td><td>${new Date(t.t).toLocaleDateString()}</td></tr>`).join('')}</tbody></table></div>` : '<p class="meta">No tickets.</p>'}
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Destinations &amp; categories</h2><div class="pill-row">${D.map(d => `<span class="tag">${d.emoji} ${d.name}</span>`).join('')}</div><div class="pill-row" style="margin-top:8px">${['Hotels', 'Transport', 'Jeep & Safari', 'Restaurants', 'Attractions'].map(c => `<span class="tag demo">${c}</span>`).join('')}</div>
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Audit log</h2>${S.audit.length ? `<div class="panel" style="max-height:260px;overflow:auto">${S.audit.map(a => `<div class="meta">${new Date(a.t).toLocaleString()} — ${esc(a.msg)}</div>`).join('')}</div>` : '<p class="meta">Empty.</p>'}
+<h2 style="font-size:1.3rem;margin:24px 0 10px">Application settings</h2><div class="panel"><button class="btn danger" data-act="wipe">Erase all demo data in this browser</button></div></div></section>`;
+};
+
+/* ----- support ----- */
+PAGES.support = () => `${pageHead('Support &amp; Help', 'FAQ, contact form, emergency numbers and notification settings.')}
+<section class="block"><div class="wrap"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px">
+<div><h2 style="font-size:1.4rem">FAQ</h2><div style="margin-top:12px">${FAQ.map(f => `<details><summary>${f[0]}</summary><p>${f[1]}</p></details>`).join('')}</div>
+<div class="panel" style="margin-top:16px"><h3>🚨 Emergency numbers (general guidance)</h3><p class="meta" style="margin-top:6px">European Union &amp; many countries: <b>112</b> · USA/Canada: <b>911</b> · UK: <b>999</b> · India: <b>112</b> · Australia: <b>000</b>. Always check local numbers and your embassy contact before travelling.</p></div></div>
+<div><div class="panel"><h3>Contact support</h3><form data-form="ticket" novalidate><div class="field" style="margin-top:8px"><label for="sn">Name *</label><input id="sn" name="name"><div class="err" data-e="name"></div></div><div class="field" style="margin-top:8px"><label for="se">Email *</label><input id="se" name="email" type="email"><div class="err" data-e="email"></div></div><div class="field" style="margin-top:8px"><label for="ss">Subject *</label><input id="ss" name="subject"><div class="err" data-e="subject"></div></div><div class="field" style="margin-top:8px"><label for="sm">Message *</label><textarea id="sm" name="msg" rows="4"></textarea><div class="err" data-e="msg"></div></div><button class="btn" style="margin-top:12px">Send message</button></form></div>
+<div class="panel" style="margin-top:16px"><h3>🔔 Notifications</h3><p class="meta">Browser notifications need your permission. Email/SMS/push require external services.</p><button class="btn sm sec" data-act="askperm" style="margin-top:8px">Enable browser notifications</button></div></div></div></div></section>`;
+
+/* ---------- router ---------- */
+let routeAfterLogin = 'home';
+function route() {
+  let name = (location.hash.replace(/^#\//, '') || 'home').split('?')[0];
+  if (!S.user && name !== 'login') { routeAfterLogin = name; name = 'login'; }
+  else if (S.user && name === 'login') { name = 'home'; routeAfterLogin = 'home'; }
+  document.body.classList.toggle('signed-out', !S.user);
+  const fn = PAGES[name] || PAGES.home;
+  $('#app').innerHTML = fn(); document.title = 'TravelMate — ' + (name === 'home' ? 'Your Entire Journey in One Place' : name[0].toUpperCase() + name.slice(1));
+  $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.r === name)); $('#nav').classList.remove('open'); $('[data-act=burger]').setAttribute('aria-expanded', 'false');
+  window.scrollTo({ top: 0 }); $('#app').focus({ preventScroll: true });
+  if (name === 'destinations') destFilter(); if (CATDEF[name]) catFilter(name);
+  refreshBadges(); refreshConnection();
+}
+function refreshBadges() {
+  const u = S.notes.filter(n => !n.read).length; const nb = $('#nb'), cb = $('#cb');
+  nb.hidden = !u; nb.textContent = u; cb.hidden = !S.cart.length; cb.textContent = S.cart.length;
+}
+function refreshConnection() {
+  const el = $('#connection-status');
+  if (!el) return;
+  const net = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const slow = !!net && (['slow-2g', '2g'].includes(net.effectiveType) || (Number(net.downlink) > 0 && Number(net.downlink) < 1.2));
+  const offline = !navigator.onLine;
+  document.body.classList.toggle('offline', offline);
+  document.body.classList.toggle('slow-network', !offline && slow);
+  document.body.classList.toggle('online-fast', !offline && !slow);
+  el.className = 'connection-status' + (offline ? ' offline' : slow ? ' slow' : '') + (!storageAvailable ? ' storage-error' : '');
+  if (!storageAvailable) el.textContent = 'Browser storage is unavailable. Changes may be lost when this page closes.';
+  else if (offline) el.textContent = 'Offline. Saved trips stay on this device. Live maps and place lookups need internet.';
+  else if (slow) el.textContent = 'Slow connection detected. Local trip planning still works; maps and place lookups may take longer.';
+  else el.textContent = 'Your profile and trips stay on this device. Live route lookups use the internet only when requested.';
+  const account = $('#account-pill');
+  if (account) account.textContent = S.user ? S.user.name : '';
+}
+function isSlowConnection() {
+  const net = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  return !!net && (['slow-2g', '2g'].includes(net.effectiveType) || (Number(net.downlink) > 0 && Number(net.downlink) < 1.2));
+}
+function rerender() { if (!S.user) return route(); const y = window.scrollY; const name = (location.hash.replace(/^#\//, '') || 'home').split('?')[0]; const fn = PAGES[name] || PAGES.home; $('#app').innerHTML = fn(); if (name === 'destinations') destFilter(); if (CATDEF[name]) catFilter(name); window.scrollTo({ top: y }); refreshBadges(); refreshConnection(); }
+
+/* ---------- detail & booking modals ---------- */
+const find = (k, id) => CATDEF[k].data.find(x => x.id === id);
+function detailHTML(k, it) {
+  const rows = [];
+  if (k === 'hotels') rows.push(['Type', it.type], ['Location', dName(it.loc)], ['Distance to centre', it.dist + ' km'], ['Amenities', it.amen.join(', ')], ['Rooms', 'Standard (2 guests) · Deluxe (2) · Family (4)'], ['Policy (demo)', 'Free cancellation up to 48 h before check-in. Check-in 14:00, check-out 11:00.'], ['Availability', 'Not live — demo inventory']);
+  if (k === 'transport') rows.push(['Category', it.cat], ['Operator', it.op], ['Duration', it.dur], ['Capacity', it.cap + ' passengers'], ['Pricing', money(it.price) + ' per ' + it.unit], ...(it.meet ? [['Meeting point', it.meet], ['Permitted area', it.area], ['Safety', it.safety], ['Restrictions', it.restr]] : [['Driver / vehicle', 'Provided by operator after real confirmation']]), ['Cancellation (demo)', 'Free up to 24 h before pickup']);
+  if (k === 'restaurants') rows.push(['Cuisine', it.cuisine], ['Distance', it.dist + ' km'], ['Price range', priceBand(it.price)], ['Dietary labels (demo, unverified)', it.diet.join(', ') || '—'], ['Delivery / pickup', it.delivery ? 'Supported (demo)' : 'Not supported — table reservation or pre-order for pickup only'], ['Menu', it.menu.map(m => `${m.n} — ${money(m.p)}${m.v ? ' 🌱' : ''}`).join('<br>')]);
+  if (k === 'attractions') rows.push(['Category', it.cat], ['Opening hours', it.open + ' – ' + it.close], ['Recommended duration', it.dur], ['Adult / child', money(it.price) + ' / ' + (it.child ? money(it.child) : 'free')], ['Age restrictions', it.age], ['Safety notice', it.safety], ['Accessibility', it.access], ['Time slots', it.slots.join(', ')]);
+  return `<div class="media" style="${bg(it.hue)};border-radius:14px;height:120px;margin-bottom:14px"><span>${it.emoji}</span></div><div class="row sp"><h3>${esc(it.name)}</h3>${stars(it.rating)}</div><p class="meta" style="margin:6px 0">Sample listing. Availability and prices are not live.</p><table class="tbl" style="margin-top:8px"><tbody>${rows.map(r => `<tr><th style="width:36%">${r[0]}</th><td>${r[1]}</td></tr>`).join('')}</tbody></table><div class="row" style="margin-top:14px"><button class="btn" data-act="book" data-k="${k}" data-id="${it.id}">Request booking</button><a class="btn ghost" target="_blank" rel="noopener" href="https://www.openstreetmap.org/search?query=${encodeURIComponent(it.name + ' ' + dName(it.loc))}">Map ↗</a></div>`;
+}
+const ROOMS = { Standard: [1, 2], Deluxe: [1.4, 2], Family: [1.8, 4] };
+function bookingForm(k, it) {
+  const t0 = today(); const f = (id, l, inner) => `<div class="field"><label for="${id}">${l}</label>${inner}<div class="err" data-e="${id}"></div></div>`;
+  let h = `<form data-form="book" data-k="${k}" data-id="${it.id}" novalidate><div class="alert info" style="font-size:.85rem">This adds an unconfirmed request to your cart. It will only be saved in this browser and will not be sent to the provider.</div><div class="grid g2">`;
+  if (k === 'hotels') h += f('checkin', 'Check-in *', `<input id="checkin" name="checkin" type="date" min="${t0}">`) + f('checkout', 'Check-out *', `<input id="checkout" name="checkout" type="date" min="${t0}">`) + f('room', 'Room type', `<select id="room" name="room">${Object.keys(ROOMS).map(r => `<option>${r}</option>`).join('')}</select>`) + f('rooms', 'Rooms', '<input id="rooms" name="rooms" type="number" min="1" max="5" value="1">') + f('adults', 'Adults *', '<input id="adults" name="adults" type="number" min="1" value="2">') + f('kids', 'Children', '<input id="kids" name="kids" type="number" min="0" value="0">');
+  if (k === 'transport') h += f('date', 'Date *', `<input id="date" name="date" type="date" min="${t0}">`) + f('time', 'Pickup time *', '<input id="time" name="time" type="time" value="09:00">') + f('pickup', 'Pickup location *', `<input id="pickup" name="pickup" value="${it.meet ? esc(it.meet) : ''}">`) + f('drop', 'Drop-off location', '<input id="drop" name="drop">') + f('pax', 'Passengers *', `<input id="pax" name="pax" type="number" min="1" max="${it.cap}" value="2">`) + f('bags', 'Luggage (bags)', '<input id="bags" name="bags" type="number" min="0" value="1">');
+  if (k === 'attractions') h += f('date', 'Date *', `<input id="date" name="date" type="date" min="${t0}">`) + f('slot', 'Time slot', `<select id="slot" name="slot">${it.slots.map(s => `<option>${s}</option>`).join('')}</select>`) + f('adults', 'Adult tickets *', '<input id="adults" name="adults" type="number" min="0" value="2">') + f('kids', 'Child tickets', '<input id="kids" name="kids" type="number" min="0" value="0">');
+  if (k === 'restaurants') {
+    h += `<div class="field" style="grid-column:1/-1"><label>Workflow</label><div class="tabs"><label style="font-weight:500"><input type="radio" name="mode" value="reserve" checked style="width:auto" data-act-change="rmode"> 🪑 Table reservation</label><label style="font-weight:500"><input type="radio" name="mode" value="preorder" style="width:auto" data-act-change="rmode"> 🥡 Meal pre-order</label></div></div>`
+      + f('date', 'Date *', `<input id="date" name="date" type="date" min="${t0}">`) + f('time', 'Time *', '<input id="time" name="time" type="time" value="19:30">')
+      + `<div id="resv" style="grid-column:1/-1">${f('party', 'Party size *', '<input id="party" name="party" type="number" min="1" max="20" value="2">')}</div>`
+      + `<div id="pre" hidden style="grid-column:1/-1"><label>Menu</label>${it.menu.map((m, i) => `<div class="menuitem"><span>${esc(m.n)} ${m.v ? '🌱' : ''}</span><span>${money(m.p)}</span><input type="number" min="0" max="20" value="0" name="m${i}" aria-label="Quantity of ${esc(m.n)}"></div>`).join('')}<div class="field" style="margin-top:10px"><label for="fulfil">Fulfilment</label><select id="fulfil" name="fulfil"><option>Pickup</option>${it.delivery ? '<option>Delivery</option>' : ''}</select></div><div class="err" data-e="menu"></div></div>`;
+  }
+  return h + `</div><div class="hr"></div><div class="row sp"><span>Estimated total</span><span class="total" id="quote">—</span></div><p class="meta">Sample prices only. No payment, taxes, or provider confirmation are processed.</p><div class="row" style="margin-top:12px"><button class="btn" type="submit">Add request to cart</button><button class="btn ghost" type="button" data-act="close">Cancel</button></div></form>`;
+}
+function quote(form) {
+  const k = form.dataset.k, it = find(k, form.dataset.id), v = Object.fromEntries(new FormData(form)); let total = 0, err = {}, ok = true, detail = '', date = '', label = '', cancel = 'Free up to 24 h before (demo)';
+  const t0 = today(); const n = x => Math.max(0, +x || 0);
+  if (k === 'hotels') {
+    label = 'Hotel'; const nights = v.checkin && v.checkout ? nightsBetween(v.checkin, v.checkout) : 0; const [mult, cap] = ROOMS[v.room];
+    if (!v.checkin) err.checkin = 'Choose a check-in date'; else if (v.checkin < t0) err.checkin = 'Check-in cannot be in the past';
+    if (!v.checkout) err.checkout = 'Choose a check-out date'; else if (nights < 1) err.checkout = 'Check-out must be after check-in';
+    if (n(v.adults) < 1) err.adults = 'At least 1 adult'; if (n(v.rooms) < 1) err.rooms = 'At least 1 room';
+    if (n(v.adults) + n(v.kids) > n(v.rooms) * cap) err.rooms = `${v.room} rooms hold ${cap} guests each — add rooms.`;
+    total = it.price * mult * Math.max(nights, 0) * n(v.rooms); date = `${v.checkin || '?'} → ${v.checkout || '?'}`; detail = `${v.room} ×${v.rooms} · ${nights} night(s) · ${n(v.adults)} adults, ${n(v.kids)} children`; cancel = 'Free up to 48 h before check-in (demo)';
+  }
+  if (k === 'transport') {
+    label = it.cat; if (!v.date) err.date = 'Choose a date'; else if (v.date < t0) err.date = 'Date cannot be in the past'; if (!v.pickup?.trim()) err.pickup = 'Pickup location required';
+    if (n(v.pax) < 1) err.pax = 'At least 1 passenger'; else if (n(v.pax) > it.cap) err.pax = `Max ${it.cap} passengers`;
+    total = it.unit === 'person' ? it.price * n(v.pax) : it.price + Math.max(0, n(v.bags) - 2) * 5; date = `${v.date || '?'} ${v.time || ''}`; detail = `${n(v.pax)} pax · pickup ${v.pickup || '?'}${v.drop ? ' → ' + v.drop : ''} · ${n(v.bags)} bags`;
+  }
+  if (k === 'attractions') {
+    label = 'Ticket'; if (!v.date) err.date = 'Choose a date'; else if (v.date < t0) err.date = 'Date cannot be in the past'; if (n(v.adults) + n(v.kids) < 1) err.adults = 'Select at least 1 ticket'; else if (n(v.adults) < 1) err.adults = 'Children need an accompanying adult';
+    total = it.price * n(v.adults) + it.child * n(v.kids); date = `${v.date || '?'} ${v.slot}`; detail = `${n(v.adults)} adult, ${n(v.kids)} child`; v.slotTime = v.slot;
+  }
+  if (k === 'restaurants') {
+    if (!v.date) err.date = 'Choose a date'; else if (v.date < t0) err.date = 'Date cannot be in the past';
+    if (v.mode === 'reserve') { label = 'Table reservation'; if (n(v.party) < 1) err.party = 'Party size required'; total = 0; detail = `Party of ${n(v.party)} · pay at restaurant`; }
+    else { label = 'Meal pre-order'; const lines = it.menu.map((m, i) => ({ m, q: n(v['m' + i]) })).filter(l => l.q); if (!lines.length) err.menu = 'Choose at least one item'; total = lines.reduce((s, l) => s + l.m.p * l.q, 0); detail = lines.map(l => `${l.q}× ${l.m.n}`).join(', ') + ` · ${v.fulfil}`; }
+    date = `${v.date || '?'} ${v.time || ''}`; cancel = 'Contact restaurant (demo: free until 2 h before)';
+  }
+  ok = !Object.keys(err).length; return { ok, err, total, detail, date, label, it, k, cancel };
+}
+function showErrs(form, err) { $$('[data-e]', form).forEach(e => e.textContent = err[e.dataset.e] || ''); $$('input,select', form).forEach(i => i.setAttribute('aria-invalid', err[i.id || i.name] ? 'true' : 'false')); }
+
+/* ---------- event delegation: clicks ---------- */
+const ACT = {
+  burger() { const n = $('#nav'); const o = n.classList.toggle('open'); $('[data-act=burger]').setAttribute('aria-expanded', o); },
+  close: closeModal,
+  fav(el) { const i = S.favs.indexOf(el.dataset.id); i < 0 ? S.favs.push(el.dataset.id) : S.favs.splice(i, 1); save(); toast(i < 0 ? 'Saved to favourites ❤️' : 'Removed from favourites'); rerender(); },
+  quick(el) { S.draft = { to: dName(el.dataset.id) }; location.hash = '#/planner'; },
+  reset(el) { $$(`[data-filters="${el.dataset.k}"] [data-f]`).forEach(e => e.value = e.tagName === 'SELECT' ? e.options[0].value : ''); el.dataset.k === 'dest' ? destFilter() : catFilter(el.dataset.k); },
+  destview(el) { const d = D.find(x => x.id === el.dataset.id); openModal(d.name + ', ' + d.country, `<div class="media" style="${bg(d.hue)};border-radius:14px;height:130px;margin-bottom:12px"><span>${d.emoji}</span></div><p>${esc(d.desc)}</p><table class="tbl" style="margin-top:10px"><tbody><tr><th>Type</th><td>${d.type}</td></tr><tr><th>Recommended stay</th><td>${d.days} days</td></tr><tr><th>Top attractions</th><td>${d.att.join(', ')}</td></tr><tr><th>Coordinates</th><td>${d.lat}, ${d.lon} · <a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${d.lat}&mlon=${d.lon}#map=9/${d.lat}/${d.lon}">Map ↗</a></td></tr><tr><th>Weather</th><td>${CONFIG.weatherKey ? 'Loading…' : 'Weather forecast requires a configured weather API key (not set in this demo).'}</td></tr></tbody></table><div class="row" style="margin-top:14px"><button class="btn" data-act="destadd" data-id="${d.id}">+ Add to trip</button><a class="btn ghost" href="#/hotels" data-act="close">See hotels</a></div>`); },
+  destadd(el) { const d = D.find(x => x.id === el.dataset.id); closeModal(); const t = curTrip(); if (t && confirm(`Add ${d.name} as a stop on “${t.name}”?\n(Cancel to start a new trip instead.)`)) { t.stops = t.stops || []; if (!t.stops.includes(d.name)) t.stops.push(d.name); save(); toast(d.name + ' added to ' + t.name, 'ok'); } else { S.draft = { to: d.name }; location.hash = '#/planner'; } },
+  view(el) { const it = find(el.dataset.k, el.dataset.id); openModal(it.name, detailHTML(el.dataset.k, it)); },
+  book(el) { const it = find(el.dataset.k, el.dataset.id); openModal('Booking request: ' + it.name, bookingForm(el.dataset.k, it)); $('#db form') && quoteUpdate($('#db form')); },
+  canceledit() { S.editTrip = null; location.hash = '#/mytrips'; },
+  tripedit(el) { S.editTrip = el.dataset.id; if (location.hash === '#/planner') rerender(); else location.hash = '#/planner'; },
+  tripdup(el) { const t = S.trips.find(x => x.id === el.dataset.id); const c = JSON.parse(JSON.stringify(t)); c.id = uid('trip'); c.name += ' (copy)'; c.status = 'planned'; S.trips.push(c); S.cur = c.id; audit('Duplicated trip ' + t.name); save(); toast('Trip duplicated', 'ok'); rerender(); },
+  tripopen(el) { S.cur = el.dataset.id; save(); location.hash = '#/itinerary'; },
+  tripcancel(el) { if (!confirm('Cancel this trip? Bookings stay in your list — cancel them separately.')) return; const t = S.trips.find(x => x.id === el.dataset.id); t.status = 'cancelled'; audit('Cancelled trip ' + t.name); notify('Trip “' + t.name + '” cancelled'); save(); rerender(); },
+  tripdel(el) { if (!confirm('Delete this trip permanently?')) return; S.trips = S.trips.filter(x => x.id !== el.dataset.id); if (S.cur === el.dataset.id) S.cur = S.trips[0]?.id || null; save(); rerender(); },
+  complete(el) { const t = S.trips.find(x => x.id === el.dataset.id); if (!confirm('Mark this trip as completed?')) return; t.status = 'completed'; audit('Completed trip ' + t.name); notify('Welcome home! “' + t.name + '” is complete 🏁'); save(); rerender(); },
+  saveroute(el) { const t = curTrip(); if (!t) return toast('Create a trip first', 'bad'); t.returnMin = +el.dataset.min; save(); toast('Saved to ' + t.name, 'ok'); },
+  itemadd(el) { itemModal(el.dataset.day); }, itemedit(el) { itemModal(el.dataset.day, +el.dataset.i); },
+  itemdel(el) { const t = curTrip(); t.itin[el.dataset.day].splice(+el.dataset.i, 1); save(); rerender(); },
+  itemdone(el) { const it = curTrip().itin[el.dataset.day][+el.dataset.i]; it.done = !it.done; save(); rerender(); },
+  itemmove(el) { const a = curTrip().itin[el.dataset.day], i = +el.dataset.i, j = i + +el.dataset.d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; save(); rerender(); },
+  itemsort(el) { curTrip().itin[el.dataset.day].sort((a, b) => toMin(a.start) - toMin(b.start)); save(); rerender(); },
+  cartdel(el) { S.cart = S.cart.filter(i => i.id !== el.dataset.id); save(); rerender(); },
+  clearres() { S.checkoutResult = null; rerender(); },
+  cancelbk(el) {
+    const b = S.bookings.find(x => x.id === el.dataset.id); if (!confirm(`Request cancellation of “${b.name}”?\nPolicy: ${b.cancel}`)) return;
+    b.status = 'Cancelled (demo)'; b.refund = 'Processed (demo)'; const tx = 'DEMO-RF-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    S.payments.unshift({ tx, t: new Date().toISOString(), amt: b.total, status: 'Refunded (demo)' });
+    if (b.trip) S.expenses.push({ id: uid('e'), trip: b.trip, cat: b.cat, desc: 'Refund: ' + b.name, usd: b.total, orig: b.total, ccy: 'USD', rate: 1, rateAt: new Date().toISOString(), date: today(), refund: true, ref: tx });
+    audit('Cancelled booking ' + b.ref); notify('Cancellation & refund processed (demo) for ' + b.name); save(); rerender();
+  },
+  expdel(el) { S.expenses = S.expenses.filter(e => e.id !== el.dataset.id); save(); rerender(); },
+  notes() { S.notes.forEach(n => n.read = true); save(); openModal('Notifications', S.notes.length ? S.notes.map(n => `<div class="panel" style="margin-bottom:8px;padding:12px"><div>${esc(n.msg)}</div><div class="meta">${new Date(n.t).toLocaleString()}</div></div>`).join('') + '<button class="btn sm ghost" data-act="clearnotes">Clear all</button>' : empty('🔔', 'All caught up', 'Booking, payment and trip reminders will show here.')); },
+  clearnotes() { S.notes = []; save(); closeModal(); },
+  askperm() { if (!('Notification' in window)) return toast('Not supported in this browser', 'bad'); Notification.requestPermission().then(p => toast('Notifications: ' + p, p === 'granted' ? 'ok' : '')); },
+  listadd() { listModal(); }, listedit(el) { listModal(el.dataset.id); },
+  listdel(el) { S.listings = S.listings.filter(l => l.id !== el.dataset.id); save(); rerender(); },
+  block(el) { const d = el.dataset.d; S.blocked[d] ? delete S.blocked[d] : S.blocked[d] = true; save(); rerender(); },
+  logout() { S.role = 'traveller'; save(); rerender(); },
+  signout() { S.user = null; S.role = 'traveller'; save(); routeAfterLogin = 'home'; location.hash = '#/login'; route(); },
+  otpnew() { if (pendingTrip) issueTripOtp(); },
+  adminlogin() { S.role = 'admin'; audit('Admin preview opened'); save(); rerender(); },
+  prov(el) { const p = S.providers.find(x => x.id === el.dataset.id); p.status = el.dataset.v; audit(`Provider ${p.name} ${p.status}`); save(); rerender(); },
+  rep(el) { const r = S.reported.find(x => x.id === el.dataset.id); r.open = false; audit('Review report ' + el.dataset.v); save(); rerender(); },
+  wipe() { if (confirm('Erase ALL demo data in this browser?')) { S = defaults(); save(); location.hash = '#/home'; route(); toast('Demo data erased'); } }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el || el.matches('[data-act-change]')) return;
+  const fn = ACT[el.dataset.act]; if (fn) { if (el.tagName === 'A' && el.dataset.act !== 'clearres' && el.dataset.act !== 'close') e.preventDefault(); fn(el, e); }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('[data-act-change=picktrip]')) { S.cur = t.value; save(); rerender(); }
+  if (t.matches('[data-act-change=check]')) { curTrip().checklist[+t.dataset.i].done = t.checked; save(); }
+  if (t.matches('[data-act-change=rmode]')) { const f = t.closest('form'); const pre = t.value === 'preorder'; $('#pre', f).hidden = !pre; $('#resv', f).hidden = pre; quoteUpdate(f); }
+  if (t.id === 'ccy') { S.ccy = t.value; save(); rerender(); }
+});
+function quoteUpdate(form) { const q = quote(form); $('#quote', form).textContent = q.total ? money(q.total) : (q.k === 'restaurants' && form.mode?.value === 'reserve' ? 'Price unavailable' : '—'); }
+document.addEventListener('input', e => {
+  const f = e.target.closest('[data-filters]'); if (f) { f.dataset.filters === 'dest' ? destFilter() : catFilter(f.dataset.filters); return; }
+  const b = e.target.closest('form[data-form=book]'); if (b) quoteUpdate(b);
+});
+
+/* ---------- itinerary/listing modals ---------- */
+function itemModal(day, idx) {
+  const t = curTrip(); const it = idx != null ? t.itin[day][idx] : {}; const opts = tripDays(t);
+  openModal(idx != null ? 'Edit activity' : 'Add activity', `<form data-form="item" data-idx="${idx ?? ''}" novalidate><div class="grid g2">
+  <div class="field"><label for="in">Activity name *</label><input id="in" name="name" value="${esc(it.name || '')}" list="attl"><datalist id="attl">${A.map(a => `<option value="${a.name}">`).join('')}</datalist><div class="err" data-e="name"></div></div>
+  <div class="field"><label for="il">Location</label><input id="il" name="loc" value="${esc(it.loc || '')}"></div>
+  <div class="field"><label for="id">Day</label><select id="id" name="day">${opts.map(d => `<option ${d === day ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
+  <div class="field"><label for="ic">Estimated cost (${S.ccy})</label><input id="ic" name="cost" type="number" min="0" step="any" value="${it.cost ? Math.round(it.cost * RATES[S.ccy]) : 0}"></div>
+  <div class="field"><label for="is">Start *</label><input id="is" name="start" type="time" value="${it.start || '09:00'}"></div>
+  <div class="field"><label for="ie">End *</label><input id="ie" name="end" type="time" value="${it.end || '10:00'}"><div class="err" data-e="end"></div></div>
+  <div class="field"><label for="itr">Travel time to next stop (min)</label><input id="itr" name="travel" type="number" min="0" value="${it.travel || 0}"></div>
+  <div class="field"><label for="ir">Booking reference</label><input id="ir" name="ref" value="${esc(it.ref || '')}"></div></div>
+  <div class="field" style="margin-top:10px"><label for="ino">Notes</label><textarea id="ino" name="notes" rows="2">${esc(it.notes || '')}</textarea></div>
+  <div class="row" style="margin-top:14px"><button class="btn">Save activity</button><button type="button" class="btn ghost" data-act="close">Cancel</button></div></form>`);
+  window._itemOld = { day, idx };
+}
+function listModal(id) {
+  const l = id ? S.listings.find(x => x.id === id) : {};
+  openModal(id ? 'Edit listing' : 'New listing', `<form data-form="listing" data-id="${id || ''}" novalidate><div class="field"><label for="ln">Name *</label><input id="ln" name="name" value="${esc(l.name || '')}"><div class="err" data-e="name"></div></div><div class="grid g2" style="margin-top:10px"><div class="field"><label for="lp">Price (${S.ccy}) *</label><input id="lp" name="price" type="number" min="0" step="any" value="${l.price != null ? Math.round(l.price * RATES[S.ccy]) : ''}"><div class="err" data-e="price"></div></div><div class="field"><label for="lc">Capacity</label><input id="lc" name="cap" type="number" min="1" value="${l.cap || 2}"></div></div><div class="field" style="margin-top:10px"><label for="ld">Description</label><textarea id="ld" name="desc" rows="3">${esc(l.desc || '')}</textarea></div><p class="meta">Photo upload needs a secure storage backend (not in demo).</p><div class="row" style="margin-top:12px"><button class="btn">Save</button><button type="button" class="btn ghost" data-act="close">Cancel</button></div></form>`);
+}
+
+/* ---------- form submissions ---------- */
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('form[data-form]'); if (!f) return; e.preventDefault(); const kind = f.dataset.form; const v = Object.fromEntries(new FormData(f)); const err = {};
+  const done = () => showErrs(f, err);
+  if (kind === 'login') {
+    const name = (v.name || '').trim();
+    const email = (v.email || '').trim();
+    if (name.length < 2) err.name = 'Enter your name (at least 2 characters).';
+    if (!isEmail(email)) err.email = 'Enter a valid email address.';
+    done();
+    if (Object.keys(err).length) return;
+    S.user = { name, email };
+    save();
+    const destination = routeAfterLogin || 'home';
+    routeAfterLogin = 'home';
+    location.hash = '#/' + destination;
+    route();
+  }
+  if (kind === 'tripotp') {
+    const code = (v.otp || '').trim();
+    if (!pendingTrip || !pendingTripOtp) { $('#trip-otp-error').textContent = 'No trip confirmation is waiting. Submit the trip form again.'; return; }
+    if (Date.now() > pendingTripOtpExpires) { pendingTripOtp = null; $('#trip-otp-error').textContent = 'This code expired. Generate a new code to continue.'; return; }
+    if (!/^\d{6}$/.test(code) || code !== pendingTripOtp) {
+      pendingTripOtpAttempts += 1;
+      if (pendingTripOtpAttempts >= 3) pendingTripOtp = null;
+      $('#trip-otp-error').textContent = pendingTripOtp ? 'That code is not correct. Try again or generate a new code.' : 'Too many incorrect attempts. Generate a new code to continue.';
+      return;
+    }
+    const data = pendingTrip;
+    pendingTrip = null;
+    pendingTripOtp = null;
+    pendingTripOtpExpires = 0;
+    pendingTripOtpAttempts = 0;
+    closeModal();
+    finishTrip(data);
+  }
+  if (kind === 'homesearch') {
+    if (!v.from.trim() || !v.to.trim()) { $('#hserr').textContent = 'Please enter both a starting location and a destination.'; return; }
+    if (v.ret < v.dep) { $('#hserr').textContent = 'Return date cannot be before departure.'; return; }
+    S.editTrip = null; S.draft = { from: v.from.trim(), to: v.to.trim(), depart: v.dep + 'T09:00', ret: v.ret + 'T18:00', adults: Math.max(1, +v.n || 1) }; location.hash = '#/planner';
+  }
+  if (kind === 'trip') {
+    if (!v.name.trim()) err.name = 'Give your trip a name'; if (!v.from.trim()) err.from = 'Required'; if (!v.to.trim()) err.to = 'Required'; if (!v.home.trim()) err.home = 'Return point is required';
+    if (!v.depart) err.depart = 'Required'; if (!v.ret) err.ret = 'Required'; else if (v.depart && new Date(v.ret) <= new Date(v.depart)) err.ret = 'Return must be after departure';
+    if (!(+v.adults >= 1)) err.adults = 'At least 1 adult'; if (!(+v.budget > 0)) err.budget = 'Enter a budget above 0'; done(); if (Object.keys(err).length) { toast('Please fix the highlighted fields', 'bad'); return; }
+    const data = { name: v.name.trim(), from: v.from.trim(), to: v.to.trim(), stops: v.stops.split('\n').map(s => s.trim()).filter(Boolean), depart: v.depart, ret: v.ret, adults: +v.adults, children: +v.children || 0, transport: v.transport, accom: v.accom, food: v.food, interests: v.interests, ccy: v.ccy, budgetUSD: toUSD(+v.budget, v.ccy), home: v.home.trim() };
+    if (S.editTrip) {
+      Object.assign(S.trips.find(t => t.id === S.editTrip), data);
+      audit('Edited trip ' + data.name);
+      toast('Trip updated', 'ok');
+      S.editTrip = null;
+      S.draft = null;
+      save();
+      location.hash = '#/itinerary';
+      route();
+    } else showTripOtp(data);
+  }
+  if (kind === 'route' || kind === 'retroute') {
+    const t = curTrip(); const out = $('#rout'); const rerr = $('#rerr'); rerr.textContent = '';
+    let places, o;
+    if (kind === 'route') { if (!v.from.trim() || !v.to.trim()) { rerr.textContent = 'Start and destination are required.'; return; } places = [v.from.trim(), ...v.stops.split('\n').map(s => s.trim()).filter(Boolean), v.to.trim()]; o = { dep: v.dep, stopmin: +v.stopmin || 0, buf: +v.buf || 0 }; }
+    else { places = [t.to, t.home]; o = { dep: t.ret, stopmin: 0, buf: 0 }; t.buffer = +v.buf || 0; }
+    out.innerHTML = '<div class="spinner" role="status" aria-label="Calculating"></div><p class="meta" style="text-align:center">Looking up places and routing…</p>';
+    try { const res = await calcRoute(places, v.mode); out.innerHTML = renderRoute(res, o); if (kind === 'retroute') { t.returnMin = Math.round(res.main.min); save(); toast(res.live ? 'Return route saved' : 'Return ESTIMATE saved (not live)', res.live ? 'ok' : ''); rerender(); const o2 = $('#rout'); if (o2) o2.innerHTML = renderRoute(res, o); } }
+    catch (x) { out.innerHTML = `<div class="alert bad"><b>Couldn’t calculate.</b> ${esc(x.message)}. Check the place names or your connection and try again.</div>`; }
+  }
+  if (kind === 'book') {
+    const q = quote(f); showErrs(f, q.err); if (!q.ok) return;
+    const dup = S.cart.some(i => i.itemId === q.it.id && i.date === q.date) || S.bookings.some(b => b.itemId === q.it.id && b.date === q.date && ['Demo-confirmed', 'Request saved locally'].includes(b.status));
+    if (dup) { toast('This request is already in your cart or saved requests.', 'bad'); return; }
+    S.cart.push({ id: uid('c'), kind: q.k, itemId: q.it.id, name: q.it.name, label: q.label, detail: q.detail, date: q.date, total: q.total, cancel: q.cancel, cat: q.k === 'hotels' ? 'Accommodation' : q.k === 'restaurants' ? 'Food' : q.k === 'attractions' ? 'Attractions' : (/jeep|safari/i.test(q.it.cat) ? 'Jeep & Safari' : 'Transport') });
+    save(); closeModal(); toast('Added to cart 🛒', 'ok');
+  }
+  if (kind === 'item') {
+    const t = curTrip(); if (!v.name.trim()) err.name = 'Name required'; if (toMin(v.end) <= toMin(v.start)) err.end = 'End must be after start'; done(); if (Object.keys(err).length) return;
+    const att = A.find(a => a.name === v.name.trim()); const item = { name: v.name.trim(), loc: v.loc, start: v.start, end: v.end, cost: toUSD(+v.cost || 0, S.ccy), travel: +v.travel || 0, ref: v.ref, notes: v.notes, done: false, ...(att ? { open: att.open, close: att.close } : {}) };
+    const { day: od, idx } = window._itemOld; t.itin = t.itin || {};
+    if (idx != null) { const old = t.itin[od][idx]; item.done = old.done; item.open = item.open || old.open; item.close = item.close || old.close; if (od === v.day) t.itin[od][idx] = item; else { t.itin[od].splice(idx, 1); (t.itin[v.day] = t.itin[v.day] || []).push(item); } }
+    else (t.itin[v.day] = t.itin[v.day] || []).push(item);
+    save(); closeModal(); toast('Activity saved', 'ok'); rerender();
+  }
+  if (kind === 'checkout') {
+    if (!v.name.trim()) err.name = 'Name required'; if (!isEmail(v.email.trim())) err.email = 'Enter a valid email'; if (!isPhone(v.phone.trim())) err.phone = 'Enter a valid phone number'; if (!v.localOnly) err.localOnly = 'Confirm that this request is saved locally only'; done(); if (Object.keys(err).length) return;
+    if (!S.cart.length) { toast('Your request cart is empty.', 'bad'); rerender(); return; }
+    const previousBookings = S.bookings, previousCart = S.cart, previousResult = S.checkoutResult;
+    const now = new Date().toISOString(); const requestRef = 'LOCAL-REQ-' + Math.random().toString(36).slice(2, 9).toUpperCase();
+    const items = S.cart.map(c => ({ ...c }));
+    const requests = items.map(c => ({ id: uid('b'), ref: requestRef, itemId: c.itemId, name: c.name, label: c.label, detail: c.detail, date: c.date, total: c.total, cancel: c.cancel, status: 'Request saved locally', trip: v.trip || null, cat: c.cat, guest: v.name.trim(), email: v.email.trim(), phone: v.phone.trim(), createdAt: now }));
+    S.bookings = [...requests, ...S.bookings];
+    S.cart = [];
+    S.checkoutResult = { requestRef, t: now, items, estimatedTotal: cartTotals(items).all };
+    if (!save()) {
+      S.bookings = previousBookings; S.cart = previousCart; S.checkoutResult = previousResult; rerender(); return;
+    }
+    toast('Request saved in this browser only. Nothing was sent to a provider or booked.', 'ok');
+    rerender(); window.scrollTo({ top: 0 });
+  }
+  if (kind === 'expense') {
+    const t = curTrip(); const a = +v.amt; if (!v.desc.trim() || !(a > 0)) { $('#eerr').textContent = 'Description and an amount above 0 are required.'; return; }
+    S.expenses.push({ id: uid('e'), trip: t.id, cat: v.cat, desc: v.desc.trim(), orig: a, ccy: v.ccy, rate: RATES[v.ccy], rateAt: new Date().toISOString(), usd: toUSD(a, v.ccy), date: today(), refund: !!v.refund }); save(); toast('Expense added', 'ok'); rerender();
+  }
+  if (kind === 'plan') { const t = curTrip(); t.plan = {}; CATS.forEach(c => t.plan[c] = toUSD(+v[c] || 0, S.ccy)); save(); toast('Plan saved', 'ok'); rerender(); }
+  if (kind === 'review') { const t = curTrip(); t.review = { stars: +v.stars, text: v.text }; audit('Review for ' + t.name); save(); toast('Thanks for your review!', 'ok'); rerender(); }
+  if (kind === 'provlogin') { S.role = 'provider'; S.provider = { type: v.type, biz: v.biz || 'Demo Business' }; audit('Provider login (mock) ' + v.biz); save(); rerender(); }
+  if (kind === 'listing') {
+    if (!v.name.trim()) err.name = 'Required'; if (!(+v.price >= 0) || v.price === '') err.price = 'Enter a price'; done(); if (Object.keys(err).length) return;
+    const o = { name: v.name.trim(), price: toUSD(+v.price, S.ccy), cap: +v.cap || 1, desc: v.desc }; if (f.dataset.id) Object.assign(S.listings.find(l => l.id === f.dataset.id), o); else S.listings.push({ id: uid('l'), ...o });
+    save(); closeModal(); toast('Listing saved', 'ok'); rerender();
+  }
+  if (kind === 'ticket') {
+    if (!v.name.trim()) err.name = 'Required'; if (!isEmail(v.email.trim())) err.email = 'Valid email required'; if (!v.subject.trim()) err.subject = 'Required'; if (!v.msg.trim()) err.msg = 'Please describe your issue'; done(); if (Object.keys(err).length) return;
+    S.tickets.unshift({ id: uid('tk'), t: new Date().toISOString(), ...v }); audit('Support ticket: ' + v.subject); save(); f.reset(); toast('Message received (demo — stored locally only).', 'ok');
+  }
+});
+
+/* ---------- boot ---------- */
+$('#ccy').innerHTML = Object.keys(RATES).map(c => `<option ${c === S.ccy ? 'selected' : ''}>${c}</option>`).join('');
+if (migrateCurrency) save();
+$('#dlg').addEventListener('click', e => { if (e.target === $('#dlg')) closeModal(); });
+window.addEventListener('hashchange', route);
+window.addEventListener('online', refreshConnection);
+window.addEventListener('offline', refreshConnection);
+const networkInfo = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+if (networkInfo && networkInfo.addEventListener) networkInfo.addEventListener('change', refreshConnection);
+S.checkoutResult = null; S.editTrip = null;
+route();
+// friendly reminders (demo): upcoming trip within 7 days
+try { S.trips.filter(t => tripStatus(t) === 'upcoming' && new Date(t.depart) - Date.now() < 7 * 864e5 && !t.reminded).forEach(t => { t.reminded = true; notify(`Reminder: “${t.name}” departs ${fmtDT(t.depart)}`); }); } catch {}
+</script>
+</body>
+</html>
